@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Técnicos - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/technicians.html" class="nav-link active">Técnicos</a>
+          <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
+          <a href="/pages/transfers.html" class="nav-link">Transferências</a>
+          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top: 30px;">
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title">Técnicos</h2>
+        <button class="btn btn-primary" onclick="showModal()">+ Novo Técnico</button>
+      </div>
+      <div id="table">
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading" style="margin: 0 auto;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Novo Técnico</h3>
+        <span class="close" onclick="hideModal()">&times;</span>
+      </div>
+      <form id="form">
+        <input type="hidden" id="id">
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input type="text" id="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria *</label>
+          <select id="category" class="form-control" required>
+            <option value="">Selecione...</option>
+            <option value="FIBRA">Fibra Óptica</option>
+            <option value="RADIO">Rádio</option>
+            <option value="INSTALACAO">Instalação</option>
+            <option value="MANUTENCAO">Manutenção</option>
+            <option value="OUTROS">Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="tel" id="phone" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="email" class="form-control">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    let data = [];
+    const CAT = {
+      FIBRA: 'Fibra Óptica',
+      RADIO: 'Rádio',
+      INSTALACAO: 'Instalação',
+      MANUTENCAO: 'Manutenção',
+      OUTROS: 'Outros'
+    };
+
+    async function init() {
+      await AuthService.requireAuth();
+      load();
+    }
+
+    async function load() {
+      try {
+        const res = await fetch('/technicians', { credentials: 'include' });
+        data = await res.json();
+        render();
+      } catch (e) {
+        document.getElementById('table').innerHTML = '<p style="text-align: center; color: var(--danger); padding: 20px;">Erro ao carregar</p>';
+      }
+    }
+
+    function render() {
+      const el = document.getElementById('table');
+      if (!data.length) {
+        el.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px;">Nenhum técnico cadastrado</p>';
+        return;
+      }
+
+      el.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Telefone</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(t => `
+              <tr>
+                <td><strong>${t.name}</strong></td>
+                <td>${CAT[t.category]}</td>
+                <td>${t.phone || '-'}</td>
+                <td><span class="badge ${t.isActive ? 'badge-success' : 'badge-danger'}">${t.isActive ? 'Ativo' : 'Inativo'}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="edit(${t.id})">Editar</button>
+                  <button class="btn btn-sm ${t.isActive ? 'btn-warning' : 'badge-success'}" onclick="toggleStatus(${t.id}, ${!t.isActive})">${t.isActive ? 'Desativar' : 'Ativar'}</button>
+                  <button class="btn btn-sm btn-danger" onclick="confirmDelete(${t.id}, '${t.name.replace(/'/g, "\\'")}')">Excluir</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function showModal() {
+      document.getElementById('modalTitle').textContent = 'Novo Técnico';
+      document.getElementById('form').reset();
+      document.getElementById('id').value = '';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function edit(id) {
+      const t = data.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('modalTitle').textContent = 'Editar Técnico';
+      document.getElementById('id').value = t.id;
+      document.getElementById('name').value = t.name;
+      document.getElementById('category').value = t.category;
+      document.getElementById('phone').value = t.phone || '';
+      document.getElementById('email').value = t.email || '';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function hideModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    async function toggleStatus(id, status) {
+      if (!confirm(`Deseja ${status ? 'ativar' : 'desativar'}?`)) return;
+      try {
+        const res = await fetch(`/technicians/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ isActive: status })
+        });
+        if (res.ok) {
+          showAlert('Atualizado!', 'success');
+          load();
+        }
+      } catch (e) {
+        showAlert('Erro');
+      }
+    }
+
+    let technicianToDelete = null;
+    let technicianNameToDelete = '';
+
+    function confirmDelete(id, name) {
+      technicianToDelete = id;
+      technicianNameToDelete = name;
+      if (confirm(`Tem certeza que deseja EXCLUIR permanentemente o técnico "${name}"?\n\nEsta ação não pode ser desfeita!`)) {
+        deleteTechnician();
+      }
+    }
+
+    async function deleteTechnician() {
+      if (!technicianToDelete) return;
+
+      try {
+        const res = await fetch(`/technicians/${technicianToDelete}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          showAlert('Técnico excluído com sucesso!', 'success');
+          technicianToDelete = null;
+          technicianNameToDelete = '';
+          load();
+        } else {
+          const error = await res.json();
+          showAlert(error.message || 'Erro ao excluir técnico', 'error');
+        }
+      } catch (e) {
+        showAlert('Erro ao excluir técnico', 'error');
+      }
+    }
+
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id').value;
+      const payload = {
+        name: document.getElementById('name').value,
+        category: document.getElementById('category').value,
+        phone: document.getElementById('phone').value || null,
+        email: document.getElementById('email').value || null
+      };
+
+      try {
+        const res = await fetch(id ? `/technicians/${id}` : '/technicians', {
+          method: id ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showAlert(id ? 'Atualizado!' : 'Criado!', 'success');
+          hideModal();
+          load();
+        } else {
+          showAlert('Erro ao salvar');
+        }
+      } catch (e) {
+        showAlert('Erro ao salvar');
+      }
+    };
+
+    window.onclick = (e) => {
+      if (e.target.id === 'modal') hideModal();
+    };
+
+    init();
+  </script>
+</body>
+</html>

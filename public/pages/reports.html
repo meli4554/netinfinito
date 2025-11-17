@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
+          <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
+          <a href="/pages/transfers.html" class="nav-link">Transferências</a>
+          <a href="/pages/reports.html" class="nav-link active">Relatórios</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top: 30px;">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h3 class="card-title">Filtros</h3>
+      </div>
+      <div style="display: flex; gap: 15px; align-items: end;">
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">Ano</label>
+          <select id="year" class="form-control">
+            <option value="2024">2024</option>
+            <option value="2025" selected>2025</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">Mês</label>
+          <select id="month" class="form-control">
+            ${[...Array(12)].map((_, i) => `<option value="${i+1}"${i===10?' selected':''}>${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][i]}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="loadReports()">Gerar</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Uso Mensal por Técnico</h3>
+        </div>
+        <div id="rep1"><p style="text-align: center; padding: 20px; color: var(--text-muted);">Clique em Gerar</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Resumo de Estoque Atual</h3>
+        </div>
+        <div id="rep2">
+          <div style="text-align: center; padding: 20px;">
+            <div class="loading" style="margin: 0 auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    const CAT = {
+      FIBRA: 'Fibra',
+      RADIO: 'Rádio',
+      INSTALACAO: 'Instalação',
+      MANUTENCAO: 'Manutenção',
+      OUTROS: 'Outros'
+    };
+
+    async function init() {
+      await AuthService.requireAuth();
+      const now = new Date();
+      document.getElementById('year').value = now.getFullYear();
+      document.getElementById('month').value = now.getMonth() + 1;
+      loadStock();
+    }
+
+    async function loadReports() {
+      const y = parseInt(document.getElementById('year').value);
+      const m = parseInt(document.getElementById('month').value);
+
+      document.getElementById('rep1').innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading" style="margin: 0 auto;"></div></div>';
+
+      try {
+        const res = await fetch(`/reports/monthly-usage-by-technician?year=${y}&month=${m}`, { credentials: 'include' });
+        const data = await res.json();
+
+        if (!data.length) {
+          document.getElementById('rep1').innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-muted);">Sem dados</p>';
+          return;
+        }
+
+        document.getElementById('rep1').innerHTML = `
+          <div style="max-height: 400px; overflow-y: auto;">
+            ${data.map(t => `
+              <div style="margin-bottom: 15px; padding: 12px; background: var(--bg-tertiary); border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong>${t.technicianName}</strong>
+                  <span class="badge badge-info">${CAT[t.category]}</span>
+                </div>
+                <table class="table" style="font-size: 13px;">
+                  <thead><tr><th>Produto</th><th>Qtd</th></tr></thead>
+                  <tbody>
+                    ${t.products.map(p => `<tr><td>${p.name}</td><td>${p.quantity} ${p.unit}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('rep1').innerHTML = '<p style="text-align: center; padding: 20px; color: var(--danger);">Erro</p>';
+      }
+    }
+
+    async function loadStock() {
+      try {
+        const res = await fetch('/reports/stock-summary', { credentials: 'include' });
+        const data = await res.json();
+
+        let html = '<div style="max-height: 400px; overflow-y: auto;">';
+
+        html += '<h4 style="margin-bottom: 10px;">Principal</h4>';
+        if (data.mainWarehouse.length) {
+          html += '<table class="table" style="font-size: 13px;"><thead><tr><th>Produto</th><th>Qtd</th></tr></thead><tbody>';
+          html += data.mainWarehouse.map(i => `<tr><td>${i.name}</td><td><strong>${i.quantity} ${i.unit}</strong></td></tr>`).join('');
+          html += '</tbody></table>';
+        } else {
+          html += '<p style="color: var(--text-muted);">Sem itens</p>';
+        }
+
+        const techStock = {};
+        data.technicians.forEach(i => {
+          if (!techStock[i.technicianName]) techStock[i.technicianName] = [];
+          techStock[i.technicianName].push(i);
+        });
+
+        if (Object.keys(techStock).length) {
+          html += '<h4 style="margin: 20px 0 10px;">Técnicos</h4>';
+          Object.keys(techStock).forEach(name => {
+            html += `
+              <div style="margin-bottom: 10px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px;">
+                <strong>${name}</strong>
+                <table class="table" style="margin-top: 8px; font-size: 13px;">
+                  <thead><tr><th>Produto</th><th>Qtd</th></tr></thead>
+                  <tbody>
+                    ${techStock[name].map(i => `<tr><td>${i.name}</td><td><strong>${i.quantity} ${i.unit}</strong></td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+          });
+        }
+
+        html += '</div>';
+        document.getElementById('rep2').innerHTML = html;
+      } catch (e) {
+        document.getElementById('rep2').innerHTML = '<p style="text-align: center; padding: 20px; color: var(--danger);">Erro</p>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

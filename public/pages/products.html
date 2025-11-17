@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .product-card {
+      animation: fadeInUp 0.3s ease-out;
+      will-change: transform;
+    }
+
+    /* Ícones SVG modernos */
+    .icon-svg {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+    }
+
+    .icon-svg-lg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Otimização para inputs */
+    input[type="text"],
+    input[type="number"],
+    select {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(19, 81, 180, 0.1);
+    }
+
+    /* Scroll suave */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Otimização para hover dos botões */
+    .btn {
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link active">Produtos</a>
+          <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
+          <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
+          <a href="/pages/transfers.html" class="nav-link">Transferências</a>
+          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top: 30px;">
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%); color: white; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <div id="headerIcon"></div>
+          <div>
+            <h2 class="card-title" style="margin: 0; color: white; font-size: 24px;">Gestão de Produtos</h2>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Almoxarifado Principal - Controle de Estoque</p>
+          </div>
+        </div>
+        <button class="btn" onclick="showModal()" style="background: white; color: var(--primary); font-weight: 600; padding: 12px 24px; border: none; display: flex; align-items: center; gap: 8px;">
+          <span id="plusIcon"></span> Novo Produto
+        </button>
+      </div>
+
+      <div id="productsTable">
+        <div id="initialLoader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content" style="max-width: 700px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="modalIcon"></div>
+          <h3 id="modalTitle" style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Novo Produto</h3>
+        </div>
+        <span class="close" onclick="hideModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <form id="form" style="padding: 20px;">
+        <input type="hidden" id="id">
+        <input type="hidden" id="sku">
+
+        <!-- Grid de 2 colunas -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nome do Produto *</label>
+            <input type="text" id="name" class="form-control" required placeholder="Ex: Roteador TP-Link" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Unidade *</label>
+            <select id="unit" class="form-control" required style="padding: 8px 10px; font-size: 14px;">
+              <option value="UN">UN - Unidade</option>
+              <option value="MT">MT - Metro</option>
+              <option value="KG">KG - Quilograma</option>
+              <option value="PCT">PCT - Pacote</option>
+              <option value="ROLO">ROLO - Rolo</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" id="barCodeField" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Código de Barras</label>
+            <input type="text" id="barCode" class="form-control" placeholder="Opcional" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Estoque Mínimo</label>
+            <input type="number" id="minStock" class="form-control" value="0" min="0" step="1" placeholder="Ex: 10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='.' || event.key===',') return false;" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+        </div>
+
+        <!-- Campos para EDIÇÃO de produto -->
+        <div id="editProductFields" style="display: none;">
+          <div id="currentStockDisplay"></div>
+        </div>
+        <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0 -20px -20px; display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="hideModal()" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" id="saveBtn" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+            <span id="saveBtnIcon"></span> Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content" style="max-width: 480px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--danger) 0%, #a02623 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="deleteModalIcon"></div>
+          <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Confirmar Exclusão</h3>
+        </div>
+        <span class="close" onclick="hideDeleteModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <div style="padding: 20px;">
+        <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 14px;">
+          Tem certeza que deseja excluir o produto:
+        </p>
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+          <p style="font-weight: 600; font-size: 15px; margin: 0; color: var(--text-primary);" id="deleteProductName"></p>
+        </div>
+        <div style="background: rgba(220, 53, 69, 0.1); border-left: 3px solid var(--danger); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+          <div id="warningIcon"></div>
+          <p style="color: var(--danger); font-size: 13px; margin: 0; font-weight: 600;">
+            Esta ação não pode ser desfeita!
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="hideDeleteModal()" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" onclick="deleteProduct()" id="confirmDeleteBtn" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+          <span id="trashBtnIcon"></span> Excluir Produto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Entrada de Estoque -->
+  <div id="stockEntryModal" class="modal">
+    <div class="modal-content" style="max-width: 700px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--success) 0%, #1e7e34 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Entrada de Estoque</h3>
+        </div>
+        <span class="close" onclick="hideStockEntryModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <form id="stockEntryForm" style="padding: 20px;">
+        <input type="hidden" id="stockEntryProductId">
+
+        <!-- Informações do Produto -->
+        <div style="background: var(--bg-tertiary); padding: 14px; border-radius: 8px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 600;">Produto</div>
+          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);" id="stockEntryProductName"></div>
+          <div style="margin-top: 8px; display: flex; gap: 16px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted);">SKU: </span>
+              <code style="background: var(--bg-primary); padding: 4px 8px; border-radius: 4px; font-size: 11px;" id="stockEntryProductSku"></code>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted);">Estoque Atual: </span>
+              <span style="font-weight: 700; color: var(--success); font-size: 13px;" id="stockEntryCurrentStock"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos de Entrada -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nº da NF *</label>
+            <input type="text" id="stockEntryInvoiceNumber" class="form-control" required placeholder="Ex: 123456" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Data da NF *</label>
+            <input type="date" id="stockEntryInvoiceDate" class="form-control" required style="padding: 8px 10px; font-size: 14px;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Data de Recebimento</label>
+            <input type="date" id="stockEntryReceivedDate" class="form-control" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Fornecedor</label>
+            <input type="text" id="stockEntrySupplier" class="form-control" placeholder="Ex: Empresa XYZ Ltda" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            Upload da Nota Fiscal (PDF)
+          </label>
+          <div style="position: relative;">
+            <input type="file" id="stockEntryInvoiceFile" accept=".pdf" class="form-control" style="padding: 8px 10px; font-size: 14px; cursor: pointer;" onchange="updateStockEntryFileLabel(this)">
+            <span id="stockEntryInvoiceFileName" style="display: none; margin-top: 6px; font-size: 12px; color: var(--success); font-weight: 600;"></span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Quantidade *</label>
+            <input type="number" id="stockEntryQuantity" class="form-control" required value="0" min="0" step="1" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='.' || event.key===',') return false;" style="padding: 8px 10px; font-size: 14px; font-weight: 600;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Observação</label>
+            <input type="text" id="stockEntryNote" class="form-control" placeholder="Ex: Fornecedor ABC" style="padding: 8px 10px; font-size: 14px;">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0 -20px -20px; display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="hideStockEntryModal()" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+            <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Confirmar Entrada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Unidades (Serial/MAC) -->
+  <div id="unitsModal" class="modal">
+    <div class="modal-content" style="max-width: 900px; border-radius: 12px; overflow: hidden; max-height: 90vh;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--info) 0%, #0056b3 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg class="icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+          <div>
+            <h3 id="unitsModalTitle" style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Unidades do Produto</h3>
+            <p id="unitsModalSubtitle" style="margin: 3px 0 0 0; opacity: 0.9; font-size: 12px;"></p>
+          </div>
+        </div>
+        <span class="close" onclick="hideUnitsModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+
+      <div style="padding: 20px; overflow-y: auto; max-height: calc(90vh - 180px);">
+        <!-- Área de Lista de Unidades -->
+        <div id="unitsListArea">
+          <!-- Toolbar de Ações -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+              <span id="unitsCountText">Unidades em Estoque</span>
+            </h4>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" onclick="selectAllUnits()" id="selectAllBtn" class="btn" style="padding: 7px 14px; font-size: 13px; background: var(--primary); color: white; border-radius: 6px; font-weight: 600;">
+                ✓ Selecionar Tudo
+              </button>
+              <button type="button" onclick="showBulkForm()" id="bulkFormBtn" class="btn" style="padding: 7px 14px; font-size: 13px; background: var(--success); color: white; border-radius: 6px; font-weight: 600; display: none;">
+                <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                Vincular MAC/Serial
+              </button>
+            </div>
+          </div>
+          <div id="unitsList"></div>
+        </div>
+
+        <!-- Área de Formulário de Vinculação (escondida inicialmente) -->
+        <div id="bulkFormArea" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--success);">
+              <svg class="icon-svg" fill="none" stroke="var(--success)" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+              Vincular MAC/Serial nas Unidades Selecionadas
+            </h4>
+            <button type="button" onclick="cancelBulkForm()" class="btn btn-secondary" style="padding: 7px 14px; font-size: 13px; border-radius: 6px; font-weight: 600;">
+              ✗ Cancelar
+            </button>
+          </div>
+          <div id="bulkFormFields"></div>
+          <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="cancelBulkForm()" class="btn btn-secondary" style="padding: 9px 18px; font-size: 14px; border-radius: 6px; font-weight: 600;">
+              Cancelar
+            </button>
+            <button type="button" onclick="saveBulkForm()" class="btn btn-success" style="padding: 9px 18px; font-size: 14px; border-radius: 6px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+              <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Salvar Tudo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão de Unidade -->
+  <div id="deleteUnitModal" class="modal">
+    <div class="modal-content" style="max-width: 520px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--danger) 0%, #a02623 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg class="icon-svg-lg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
+          <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Deletar Unidade</h3>
+        </div>
+        <span class="close" onclick="hideDeleteUnitModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <div style="padding: 20px;">
+        <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 14px;">
+          Tem certeza que deseja deletar a unidade:
+        </p>
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+          <p style="font-weight: 600; font-size: 15px; margin: 0; color: var(--text-primary);" id="deleteUnitName"></p>
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; margin-bottom: 6px; font-size: 13px;">Motivo da Exclusão *</label>
+          <textarea id="deleteUnitReason" class="form-control" rows="3" placeholder="Ex: Produto defeituoso, extraviado, vendido, etc." required style="resize: vertical; min-height: 70px; font-size: 13px;"></textarea>
+        </div>
+        <div style="background: rgba(220, 53, 69, 0.1); border-left: 3px solid var(--danger); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+          <svg class="icon-svg-lg" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+          <p style="color: var(--danger); font-size: 13px; margin: 0; font-weight: 600;">
+            Esta ação não pode ser desfeita!
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="hideDeleteUnitModal()" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" onclick="deleteUnitWithReason()" id="confirmDeleteUnitBtn" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+          <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          Deletar Unidade
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Inutilização de Unidade -->
+  <div id="inutilizeUnitModal" class="modal">
+    <div class="modal-content" style="max-width: 560px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #d29922 0%, #a37700 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+          <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Inutilizar Unidade</h3>
+        </div>
+        <span class="close" onclick="hideInutilizeUnitModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <div style="padding: 20px;">
+        <div style="background: rgba(210, 153, 34, 0.1); border-left: 3px solid var(--warning); padding: 12px; border-radius: 6px; margin-bottom: 14px;">
+          <p style="color: var(--warning); font-size: 13px; margin: 0; font-weight: 600;">
+            ⚠️ Unidade será INUTILIZADA e aguardará troca
+          </p>
+        </div>
+
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+          <p style="font-weight: 600; font-size: 15px; margin: 0 0 6px 0; color: var(--text-primary);" id="inutilizeUnitName"></p>
+          <div style="font-size: 12px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div><strong>NF:</strong> <span id="inutilizeUnitInvoice"></span></div>
+            <div><strong>Data NF:</strong> <span id="inutilizeUnitInvoiceDate"></span></div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; margin-bottom: 6px; font-size: 13px;">Motivo da Inutilização *</label>
+          <textarea id="inutilizeUnitReason" class="form-control" rows="3" placeholder="Ex: Produto defeituoso, não liga, tela quebrada..." required style="resize: vertical; min-height: 70px; font-size: 13px;"></textarea>
+        </div>
+
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 0;">
+          <input type="checkbox" id="awaitingReplacement" checked style="width: 16px; height: 16px; cursor: pointer;">
+          <span style="font-weight: 600; font-size: 13px;">Solicitar troca (gera relatório)</span>
+        </label>
+      </div>
+      <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="hideInutilizeUnitModal()" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+          Cancelar
+        </button>
+        <button type="button" class="btn" onclick="inutilizeUnitWithReason()" id="confirmInutilizeUnitBtn" style="padding: 9px 18px; font-weight: 600; border-radius: 6px; display: flex; align-items: center; gap: 6px; background: var(--warning); color: white; font-size: 14px;">
+          <svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+          Inutilizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalhes da Unidade -->
+  <div id="unitDetailsModal" class="modal">
+    <div class="modal-content" style="max-width: 700px; border-radius: 12px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%); color: white; padding: 16px 20px; border: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 22px; height: 22px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">Detalhes da Unidade</h3>
+        </div>
+        <span class="close" onclick="hideUnitDetailsModal()" style="color: white; opacity: 0.9; font-size: 28px; cursor: pointer; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.9'">&times;</span>
+      </div>
+      <div style="padding: 24px;">
+        <!-- Nome e Status -->
+        <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <h4 id="detailsUnitName" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-primary);"></h4>
+            <span id="detailsUnitStatus"></span>
+          </div>
+        </div>
+
+        <!-- Informações do Produto -->
+        <div style="margin-bottom: 24px;">
+          <h5 style="font-size: 14px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Identificação</h5>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">SERIAL NUMBER</div>
+              <div id="detailsSerial" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+            </div>
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">MAC ADDRESS</div>
+              <div id="detailsMAC" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informações da Nota Fiscal -->
+        <div id="detailsInvoiceSection" style="margin-bottom: 24px;">
+          <h5 style="font-size: 14px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Nota Fiscal de Entrada</h5>
+          <div style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 86, 179, 0.05) 100%); border: 1px solid rgba(0, 123, 255, 0.2); border-radius: 10px; padding: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">NÚMERO DA NF</div>
+                <div id="detailsInvoiceNumber" style="font-size: 16px; font-weight: 700; color: var(--primary);"></div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">DATA DA NF</div>
+                <div id="detailsInvoiceDate" style="font-size: 16px; font-weight: 700; color: var(--text-primary);"></div>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">DATA DE RECEBIMENTO</div>
+                <div id="detailsReceivedAt" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">FORNECEDOR</div>
+                <div id="detailsSupplier" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">DATA/HORA DO CADASTRO EM ESTOQUE</div>
+                <div id="detailsEntryDate" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+              </div>
+              <div id="detailsInvoiceFileContainer">
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">ARQUIVO PDF</div>
+                <a id="detailsInvoiceFile" href="#" target="_blank" style="font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  Baixar NF
+                </a>
+              </div>
+            </div>
+            <div id="detailsNoteContainer" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(0, 123, 255, 0.2);">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">OBSERVAÇÕES</div>
+              <div id="detailsNote" style="font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informações de Inutilização (se aplicável) -->
+        <div id="detailsInutilizedSection" style="display: none; margin-bottom: 24px;">
+          <h5 style="font-size: 14px; font-weight: 700; color: var(--warning); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Inutilização</h5>
+          <div style="background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.3); border-radius: 10px; padding: 16px;">
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">DATA/HORA</div>
+              <div id="detailsInutilizedAt" style="font-size: 14px; font-weight: 600; color: var(--text-primary);"></div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">MOTIVO</div>
+              <div id="detailsInutilizedReason" style="font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data de Criação -->
+        <div style="padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">CRIADO EM</div>
+            <div id="detailsCreatedAt" style="font-size: 12px; color: var(--text-primary);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="background: var(--bg-tertiary); padding: 14px 20px; margin: 0; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary" onclick="hideUnitDetailsModal()" style="padding: 9px 24px; font-weight: 600; border-radius: 6px; font-size: 14px;">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    let products = [];
+    let currentUser = null;
+
+    // Ícones SVG modernos e leves
+    const icons = {
+      box: '<svg class="icon-svg-lg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+      edit: '<svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>',
+      trash: '<svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>',
+      save: '<svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>',
+      alert: '<svg class="icon-svg-lg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>',
+      plus: '<svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>',
+      package: '<svg class="icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
+      checkCircle: '<svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>',
+      alertTriangle: '<svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>',
+      xCircle: '<svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>',
+      loader: '<svg class="icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-opacity="0.25"></circle><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path></svg>',
+      emptyBox: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 80px; height: 80px; opacity: 0.3;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
+    };
+  </script>
+  <script>
+
+    async function init() {
+      // Injetar ícones fixos
+      document.getElementById('headerIcon').innerHTML = icons.package;
+      document.getElementById('plusIcon').innerHTML = icons.plus;
+      document.getElementById('modalIcon').innerHTML = icons.box;
+      document.getElementById('deleteModalIcon').innerHTML = icons.alert;
+      document.getElementById('warningIcon').innerHTML = icons.alertTriangle;
+      document.getElementById('saveBtnIcon').innerHTML = icons.save;
+      document.getElementById('trashBtnIcon').innerHTML = icons.trash;
+      document.getElementById('initialLoader').innerHTML = icons.loader + '<p style="color: var(--text-muted); margin-top: 20px;">Carregando produtos...</p>';
+
+      currentUser = await AuthService.requireAuth();
+      if (!currentUser) return;
+      loadProducts();
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch('/products', { credentials: 'include' });
+        if (!res.ok) throw new Error('Erro ao carregar');
+        products = await res.json();
+        render();
+      } catch (error) {
+        document.getElementById('productsTable').innerHTML =
+          '<p style="text-align: center; color: var(--danger); padding: 20px;">Erro ao carregar produtos</p>';
+      }
+    }
+
+    function render() {
+      const el = document.getElementById('productsTable');
+      if (!products.length) {
+        el.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center;">
+            ${icons.emptyBox}
+            <h3 style="color: var(--text-secondary); margin: 20px 0 10px 0; font-size: 20px;">Nenhum produto cadastrado</h3>
+            <p style="color: var(--text-muted); margin: 0 0 30px 0;">Comece adicionando seu primeiro produto ao estoque</p>
+            <button class="btn btn-primary" onclick="showModal()" style="padding: 12px 30px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+              ${icons.plus} Adicionar Primeiro Produto
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Grid de cards moderno e responsivo
+      el.innerHTML = `
+        <div style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+            ${products.map(p => {
+              const stock = p.currentStock || 0;
+              const isLowStock = stock <= p.minStock && stock > 0;
+              const isOutOfStock = stock === 0;
+              const isOk = stock > p.minStock;
+
+              let statusColor, statusBg, statusText, statusIcon;
+              if (isOutOfStock) {
+                statusColor = '#da3633';
+                statusBg = 'rgba(220, 53, 69, 0.15)';
+                statusText = 'SEM ESTOQUE';
+                statusIcon = icons.xCircle;
+              } else if (isLowStock) {
+                statusColor = '#d29922';
+                statusBg = 'rgba(210, 153, 34, 0.15)';
+                statusText = 'ESTOQUE BAIXO';
+                statusIcon = icons.alertTriangle;
+              } else {
+                statusColor = '#2da44e';
+                statusBg = 'rgba(45, 164, 78, 0.15)';
+                statusText = 'DISPONÍVEL';
+                statusIcon = icons.checkCircle;
+              }
+
+              return `
+                <div class="product-card" style="
+                  background: var(--bg-secondary);
+                  border: 1px solid var(--border-color);
+                  border-radius: 12px;
+                  padding: 20px;
+                  transition: all 0.2s ease;
+                  position: relative;
+                  overflow: hidden;
+                  cursor: pointer;
+                " onmouseenter="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.3)'; this.style.borderColor='var(--primary)';"
+                   onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-color)';">
+
+                  <!-- Badge de Status no topo -->
+                  <div style="position: absolute; top: 0; right: 0; background: ${statusBg}; color: ${statusColor}; padding: 6px 12px; border-bottom-left-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">
+                    ${statusIcon} ${statusText}
+                  </div>
+
+                  <!-- SKU -->
+                  <div style="margin-bottom: 12px; margin-top: 8px;">
+                    <code style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">${p.sku}</code>
+                  </div>
+
+                  <!-- Nome do Produto -->
+                  <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: var(--text-primary); line-height: 1.4; padding-right: 100px;">
+                    ${p.name}
+                  </h3>
+
+                  <!-- Grid de Informações -->
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+
+                    <!-- Unidade -->
+                    <div style="text-align: center;">
+                      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Unidade</div>
+                      <div style="background: var(--primary); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px;">${p.unit}</div>
+                    </div>
+
+                    <!-- Estoque Atual -->
+                    <div style="text-align: center;">
+                      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Estoque (Principal)</div>
+                      <div style="font-size: 28px; font-weight: 700; color: ${statusColor}; line-height: 1;">${stock}</div>
+                    </div>
+
+                    <!-- Estoque Mínimo -->
+                    <div style="text-align: center;">
+                      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Mínimo</div>
+                      <div style="font-size: 20px; font-weight: 600; color: var(--text-muted); line-height: 1;">${p.minStock}</div>
+                    </div>
+                  </div>
+
+                  <!-- Barra de Progresso de Estoque -->
+                  <div style="margin-bottom: 20px;">
+                    <div style="background: var(--bg-primary); height: 6px; border-radius: 3px; overflow: hidden;">
+                      <div style="background: ${statusColor}; height: 100%; width: ${Math.min((stock / (p.minStock * 2)) * 100, 100)}%; transition: width 0.3s ease; border-radius: 3px;"></div>
+                    </div>
+                  </div>
+
+                  <!-- Botões de Ação -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: ${p.trackSerial ? '10px' : '0'};">
+                    <button class="btn btn-success" onclick="event.stopPropagation(); openStockEntry(${p.id})" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px;">
+                      <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      Entrada
+                    </button>
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); edit(${p.id})" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px;">
+                      ${icons.edit} Editar
+                    </button>
+                    <button class="btn btn-danger" onclick="event.stopPropagation(); confirmDelete(${p.id}, '${p.name.replace(/'/g, "\\'")}');" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px;">
+                      ${icons.trash} Excluir
+                    </button>
+                  </div>
+                  ${p.trackSerial ? `
+                    <button class="btn" onclick="event.stopPropagation(); viewUnits(${p.id}, '${p.name.replace(/'/g, "\\'")}');" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; font-size: 13px; font-weight: 600; border-radius: 8px; background: #0d47a1; color: white; width: 100%; border: 1px solid #0a3d8f; box-shadow: 0 2px 4px rgba(13, 71, 161, 0.2); transition: all 0.2s ease;" onmouseenter="this.style.background='#0b3d91'; this.style.boxShadow='0 4px 8px rgba(13, 71, 161, 0.3)'; this.style.transform='translateY(-1px)';" onmouseleave="this.style.background='#0d47a1'; this.style.boxShadow='0 2px 4px rgba(13, 71, 161, 0.2)'; this.style.transform='translateY(0)';">
+                      <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                      Ver Unidades (Serial/MAC)
+                    </button>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function showModal() {
+      document.getElementById('modalTitle').textContent = 'Novo Produto';
+      document.getElementById('form').reset();
+      document.getElementById('id').value = '';
+      document.getElementById('editProductFields').style.display = 'none';
+      document.getElementById('barCodeField').style.display = 'block';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function edit(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('modalTitle').textContent = 'Editar Produto';
+      document.getElementById('id').value = p.id;
+      document.getElementById('sku').value = p.sku;
+      document.getElementById('name').value = p.name;
+      document.getElementById('unit').value = p.unit;
+      document.getElementById('barCode').value = p.barCode || '';
+      document.getElementById('minStock').value = p.minStock;
+
+      // Mostrar campos de edição
+      document.getElementById('editProductFields').style.display = 'block';
+      document.getElementById('barCodeField').style.display = 'none';
+
+      // Exibir estoque atual e botão de unidades
+      const stock = p.currentStock || 0;
+      document.getElementById('currentStockDisplay').innerHTML = `
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;">
+            <div style="display: flex; gap: 20px; align-items: center;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; font-weight: 600;">Estoque Atual</div>
+                <div style="font-size: 22px; font-weight: 700; color: ${stock === 0 ? 'var(--danger)' : stock <= p.minStock ? 'var(--warning)' : 'var(--success)'};">${stock} <span style="font-size: 14px; font-weight: 500;">${p.unit}</span></div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; font-weight: 600;">Mínimo</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-muted);">${p.minStock}</div>
+              </div>
+            </div>
+            <button type="button" onclick="viewUnits(${p.id}, '${p.name.replace(/'/g, "\\'")}');" class="btn" style="padding: 9px 16px; font-weight: 600; border-radius: 7px; background: #0d47a1; color: white; display: flex; align-items: center; gap: 7px; font-size: 13px; white-space: nowrap; border: 1px solid #0a3d8f; box-shadow: 0 2px 4px rgba(13, 71, 161, 0.2); transition: all 0.2s ease;" onmouseenter="this.style.background='#0b3d91'; this.style.boxShadow='0 4px 8px rgba(13, 71, 161, 0.3)'; this.style.transform='translateY(-1px)';" onmouseleave="this.style.background='#0d47a1'; this.style.boxShadow='0 2px 4px rgba(13, 71, 161, 0.2)'; this.style.transform='translateY(0)';">
+              <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+              Ver Unidades
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function hideModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id').value;
+      const data = {
+        name: document.getElementById('name').value,
+        unit: document.getElementById('unit').value,
+        minStock: parseInt(document.getElementById('minStock').value) || 0
+      };
+
+      // Apenas incluir código de barras ao criar novo produto
+      if (!id) {
+        data.barCode = document.getElementById('barCode').value || null;
+      }
+
+      // Apenas incluir SKU ao editar (SKU é gerado automaticamente ao criar)
+      if (id) {
+        data.sku = document.getElementById('sku').value;
+      }
+
+      try {
+        // Salvar produto
+        const res = await fetch(id ? `/products/${id}` : '/products', {
+          method: id ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          showAlert(id ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!', 'success');
+          hideModal();
+          loadProducts();
+        } else {
+          showAlert('Erro ao salvar produto');
+        }
+      } catch (error) {
+        showAlert('Erro ao salvar produto');
+      }
+    };
+
+    // Variável para armazenar o ID do produto a ser excluído
+    let productToDelete = null;
+
+    function confirmDelete(id, name) {
+      productToDelete = id;
+      document.getElementById('deleteProductName').textContent = name;
+      document.getElementById('deleteModal').style.display = 'block';
+    }
+
+    function hideDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      productToDelete = null;
+    }
+
+    // Funções do Modal de Entrada de Estoque
+    async function openStockEntry(productId) {
+      try {
+        // Buscar dados do produto
+        const res = await fetch(`/products/${productId}`, {
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          const product = await res.json();
+
+          // Preencher informações do produto no modal
+          document.getElementById('stockEntryProductId').value = product.id;
+          document.getElementById('stockEntryProductName').textContent = product.name;
+          document.getElementById('stockEntryProductSku').textContent = product.sku;
+          document.getElementById('stockEntryCurrentStock').textContent = `${product.currentStock || 0} ${product.unit}`;
+
+          // Limpar formulário
+          document.getElementById('stockEntryForm').reset();
+          document.getElementById('stockEntryProductId').value = product.id;
+          document.getElementById('stockEntryQuantity').value = '0';
+          document.getElementById('stockEntryInvoiceFileName').style.display = 'none';
+
+          // Mostrar modal
+          document.getElementById('stockEntryModal').style.display = 'block';
+        } else {
+          showAlert('Erro ao carregar dados do produto', 'error');
+        }
+      } catch (error) {
+        showAlert('Erro ao carregar dados do produto', 'error');
+      }
+    }
+
+    function hideStockEntryModal() {
+      document.getElementById('stockEntryModal').style.display = 'none';
+    }
+
+    function updateStockEntryFileLabel(input) {
+      const fileName = input.files[0]?.name;
+      const label = document.getElementById('stockEntryInvoiceFileName');
+
+      if (fileName) {
+        label.textContent = `Arquivo selecionado: ${fileName}`;
+        label.style.display = 'block';
+      } else {
+        label.style.display = 'none';
+      }
+    }
+
+    // Handler do formulário de entrada de estoque
+    document.getElementById('stockEntryForm').onsubmit = async (e) => {
+      e.preventDefault();
+
+      const productId = document.getElementById('stockEntryProductId').value;
+      const quantity = parseInt(document.getElementById('stockEntryQuantity').value) || 0;
+      const invoiceNumber = document.getElementById('stockEntryInvoiceNumber').value.trim();
+      const invoiceDate = document.getElementById('stockEntryInvoiceDate').value;
+      const receivedDate = document.getElementById('stockEntryReceivedDate').value;
+      const supplier = document.getElementById('stockEntrySupplier').value.trim();
+      const note = document.getElementById('stockEntryNote').value || 'Entrada manual de estoque';
+      const invoiceFileInput = document.getElementById('stockEntryInvoiceFile');
+      const invoiceFile = invoiceFileInput.files[0];
+
+      // Validações
+      if (quantity <= 0) {
+        showAlert('Quantidade deve ser maior que zero!', 'error');
+        return;
+      }
+
+      if (!invoiceNumber || !invoiceDate) {
+        showAlert('Número da Nota Fiscal e Data são obrigatórios!', 'error');
+        return;
+      }
+
+      try {
+        // Fazer upload do arquivo PDF se fornecido
+        let invoiceFilePath = null;
+        if (invoiceFile) {
+          const formData = new FormData();
+          formData.append('file', invoiceFile);
+          formData.append('invoiceNumber', invoiceNumber);
+
+          const uploadRes = await fetch('/upload/invoice', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            invoiceFilePath = uploadData.filePath;
+          } else {
+            showAlert('Erro ao fazer upload do arquivo PDF', 'error');
+            return;
+          }
+        }
+
+        // Adicionar entrada de estoque
+        const bodyData = {
+          productId: parseInt(productId),
+          type: 'IN',
+          quantity: quantity,
+          referenceType: 'ENTRY',
+          referenceId: parseInt(productId),
+          invoiceNumber: invoiceNumber,
+          invoiceDate: new Date(invoiceDate).toISOString(),
+          invoiceFile: invoiceFilePath,
+          receivedAt: receivedDate ? new Date(receivedDate).toISOString() : null,
+          supplier: supplier || null,
+          note: note
+        };
+
+        const stockRes = await fetch('/stock-movements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(bodyData)
+        });
+
+        if (stockRes.ok) {
+          // Criar instâncias do produto para rastrear as unidades adicionadas
+          try {
+            const instances = Array(quantity).fill(null).map(() => ({
+              serialNumber: null,
+              macAddress: null
+            }));
+
+            await fetch('/product-instances/bulk', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                productId: parseInt(productId),
+                instances: instances
+              })
+            });
+          } catch (err) {
+            console.log('Instâncias serão criadas quando necessário');
+          }
+
+          showAlert('Entrada de estoque realizada com sucesso!', 'success');
+          hideStockEntryModal();
+          loadProducts();
+        } else {
+          const errorData = await stockRes.json().catch(() => ({}));
+          showAlert(`Erro ao adicionar entrada de estoque: ${errorData.message || 'Erro desconhecido'}`, 'error');
+        }
+      } catch (error) {
+        showAlert('Erro ao processar entrada de estoque', 'error');
+      }
+    };
+
+    async function deleteProduct() {
+      if (!productToDelete) return;
+
+      const btn = document.getElementById('confirmDeleteBtn');
+      btn.disabled = true;
+      btn.textContent = 'Excluindo...';
+
+      try {
+        const res = await fetch(`/products/${productToDelete}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          hideDeleteModal();
+          showAlert('Produto excluído com sucesso!', 'success');
+          loadProducts();
+        } else {
+          hideDeleteModal();
+          setTimeout(() => {
+            showAlert(data.message || 'Erro ao excluir produto', 'error');
+          }, 300);
+        }
+      } catch (error) {
+        hideDeleteModal();
+        setTimeout(() => {
+          showAlert('Erro ao excluir produto', 'error');
+        }, 300);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Excluir Produto';
+      }
+    }
+
+    // Remover evento de clique no fundo do modal
+    // Modal só fecha com botão X ou Cancelar
+
+    // ============================================================
+    // GERENCIAMENTO DE UNIDADES (Serial/MAC)
+    // ============================================================
+
+    let currentProductId = null;
+    let currentProductName = null;
+    let units = [];
+    let unitToDelete = null;
+
+    async function viewUnits(productId, productName) {
+      currentProductId = productId;
+      currentProductName = productName;
+
+      document.getElementById('unitsModalTitle').textContent = `Unidades: ${productName}`;
+      document.getElementById('unitsModalSubtitle').textContent = `Gerencie as unidades individuais com Serial Number e MAC Address`;
+      document.getElementById('unitsModal').style.display = 'block';
+
+      await loadUnits();
+    }
+
+    function hideUnitsModal() {
+      document.getElementById('unitsModal').style.display = 'none';
+      currentProductId = null;
+      currentProductName = null;
+      units = [];
+    }
+
+    async function loadUnits() {
+      try {
+        // Buscar o produto para obter o estoque atual
+        const product = products.find(p => p.id === currentProductId);
+        if (!product) throw new Error('Produto não encontrado');
+
+        const currentStock = product.currentStock || 0;
+
+        // Buscar unidades já cadastradas
+        const res = await fetch(`/product-instances/product/${currentProductId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Erro ao carregar unidades');
+        const existingUnits = await res.json();
+
+        // Se o estoque for maior que as unidades cadastradas, criar as faltantes automaticamente
+        const unitsToCreate = currentStock - existingUnits.length;
+        if (unitsToCreate > 0) {
+          const instances = Array(unitsToCreate).fill(null).map(() => ({
+            serialNumber: null,
+            macAddress: null
+          }));
+
+          await fetch('/product-instances/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              productId: currentProductId,
+              instances: instances
+            })
+          });
+
+          // Recarregar unidades após criar as novas
+          const resReload = await fetch(`/product-instances/product/${currentProductId}`, { credentials: 'include' });
+          units = await resReload.json();
+        } else {
+          units = existingUnits;
+        }
+
+        // Atualizar contador
+        document.getElementById('unitsCountText').textContent = `${units.length} Unidade${units.length !== 1 ? 's' : ''} em Estoque`;
+
+        renderUnits();
+
+        // Inicializar estado dos botões de seleção em massa
+        setTimeout(() => {
+          updateSelectedCount();
+        }, 100);
+      } catch (error) {
+        showAlert('Erro ao carregar unidades', 'error');
+      }
+    }
+
+    function renderUnits() {
+      const container = document.getElementById('unitsList');
+
+      if (!units.length) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; background: var(--bg-secondary); border-radius: 8px; border: 2px dashed var(--border-color);">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 60px; height: 60px; opacity: 0.3; margin: 0 auto 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <p style="color: var(--text-muted); margin: 0; font-size: 15px;">Nenhuma unidade em estoque</p>
+            <p style="color: var(--text-muted); margin: 8px 0 0 0; font-size: 13px;">Adicione estoque ao produto primeiro para gerenciar unidades</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+          ${units.map((unit, index) => {
+            const isInutilized = unit.status === 'INUTILIZED';
+            const awaitingReplacement = unit.awaitingReplacement;
+
+            return `
+              <div style="
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: 16px;
+                align-items: center;
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border-color);
+                transition: background 0.2s ease;
+                ${awaitingReplacement ? 'background: rgba(210, 153, 34, 0.1);' : ''}
+              " onmouseenter="this.style.background='var(--bg-tertiary)'" onmouseleave="this.style.background='${awaitingReplacement ? 'rgba(210, 153, 34, 0.1)' : 'transparent'}'">
+
+                <!-- Checkbox -->
+                ${!isInutilized ? `
+                  <input type="checkbox"
+                    class="unit-checkbox"
+                    data-unit-id="${unit.id}"
+                    data-unit-index="${index}"
+                    onchange="updateSelectedCount()"
+                    style="width: 18px; height: 18px; cursor: pointer;">
+                ` : '<div style="width: 18px;"></div>'}
+
+                <!-- Informações da Unidade -->
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${currentProductName}</span>
+                    <code style="background: var(--bg-tertiary); color: var(--primary); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">#${index + 1}</code>
+                    ${unit.invoiceNumber ? `
+                      <span style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 86, 179, 0.1) 100%); border: 1px solid rgba(0, 123, 255, 0.3); color: var(--primary); padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        NF ${unit.invoiceNumber}
+                      </span>
+                    ` : ''}
+                    ${awaitingReplacement ? `
+                      <span style="background: var(--warning); color: white; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700;">
+                        ⚠️ AGUARDANDO TROCA
+                      </span>
+                    ` : ''}
+                    ${isInutilized && !awaitingReplacement ? `
+                      <span style="color: var(--warning); font-size: 11px; font-weight: 700;">⚠️ INUTILIZADO</span>
+                    ` : ''}
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 20px;">
+                    <span><strong>Serial:</strong> ${unit.serialNumber || '<em>não cadastrado</em>'}</span>
+                    <span><strong>MAC:</strong> ${unit.macAddress || '<em>não cadastrado</em>'}</span>
+                  </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                  <button onclick="viewUnitDetails(${unit.id})" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--info); color: white;">
+                    <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Ver Detalhes
+                  </button>
+                  ${!isInutilized ? `
+                    <button onclick="confirmInutilizeUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}', '${unit.invoiceNumber || 'N/A'}', '${unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A'}')" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--warning); color: white;">
+                      <svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+                      Inutilizar
+                    </button>
+                  ` : `
+                    <button onclick="viewReplacementReport(${unit.id})" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--success); color: white;">
+                      <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      Relatório
+                    </button>
+                  `}
+                  <button onclick="confirmDeleteUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}')" class="btn btn-danger" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    ${icons.trash} Deletar
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function confirmDeleteUnit(unitId, unitName) {
+      unitToDelete = unitId;
+      document.getElementById('deleteUnitName').textContent = unitName;
+      document.getElementById('deleteUnitReason').value = '';
+      document.getElementById('deleteUnitModal').style.display = 'block';
+    }
+
+    function hideDeleteUnitModal() {
+      document.getElementById('deleteUnitModal').style.display = 'none';
+      unitToDelete = null;
+    }
+
+    async function deleteUnitWithReason() {
+      const reason = document.getElementById('deleteUnitReason').value.trim();
+
+      if (!reason) {
+        showAlert('Por favor, informe o motivo da exclusão', 'error');
+        return;
+      }
+
+      if (!unitToDelete) return;
+
+      const btn = document.getElementById('confirmDeleteUnitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="icon-svg" style="animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-opacity="0.25"></circle><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path></svg> Deletando...';
+
+      try {
+        const res = await fetch(`/product-instances/${unitToDelete}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          hideDeleteUnitModal();
+          showAlert(`Unidade deletada com sucesso! Motivo: ${reason}`, 'success');
+          await loadUnits();
+          // Recarregar produtos para atualizar o estoque
+          await loadProducts();
+        } else {
+          showAlert('Erro ao deletar unidade', 'error');
+        }
+      } catch (error) {
+        showAlert('Erro ao deletar unidade', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Deletar Unidade';
+      }
+    }
+
+    async function updateUnit(unitId, field, value) {
+      try {
+        const data = {};
+        data[field] = value || null;
+
+        const res = await fetch(`/product-instances/${unitId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          showAlert(`${field === 'serialNumber' ? 'Serial' : 'MAC'} atualizado com sucesso!`, 'success');
+          await loadUnits();
+        } else {
+          showAlert(`Erro ao atualizar ${field === 'serialNumber' ? 'serial' : 'MAC'}`, 'error');
+        }
+      } catch (error) {
+        showAlert(`Erro ao atualizar ${field === 'serialNumber' ? 'serial' : 'MAC'}`, 'error');
+      }
+    }
+
+    // ============================================================
+    // INUTILIZAÇÃO DE UNIDADES
+    // ============================================================
+
+    function confirmInutilizeUnit(unitId, unitName, invoiceNumber, invoiceDate) {
+      unitToDelete = unitId; // Reutilizando a variável
+      document.getElementById('inutilizeUnitName').textContent = unitName;
+      document.getElementById('inutilizeUnitInvoice').textContent = invoiceNumber;
+      document.getElementById('inutilizeUnitInvoiceDate').textContent = invoiceDate;
+      document.getElementById('inutilizeUnitReason').value = '';
+      document.getElementById('awaitingReplacement').checked = true;
+      document.getElementById('inutilizeUnitModal').style.display = 'block';
+    }
+
+    function hideInutilizeUnitModal() {
+      document.getElementById('inutilizeUnitModal').style.display = 'none';
+      unitToDelete = null;
+    }
+
+    function viewUnitDetails(unitId) {
+      const unit = units.find(u => u.id === unitId);
+      if (!unit) return;
+
+      const index = units.indexOf(unit);
+      const unitName = `${currentProductName} #${index + 1}`;
+
+      // Preencher dados básicos
+      document.getElementById('detailsUnitName').textContent = unitName;
+
+      // Status badge
+      let statusBadge = '';
+      if (unit.awaitingReplacement) {
+        statusBadge = '<span style="background: var(--warning); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700;">⚠️ AGUARDANDO TROCA</span>';
+      } else if (unit.status === 'INUTILIZED') {
+        statusBadge = '<span style="background: var(--danger); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700;">INUTILIZADO</span>';
+      } else {
+        statusBadge = '<span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700;">DISPONÍVEL</span>';
+      }
+      document.getElementById('detailsUnitStatus').innerHTML = statusBadge;
+
+      // Identificação
+      document.getElementById('detailsSerial').textContent = unit.serialNumber || 'Não cadastrado';
+      document.getElementById('detailsMAC').textContent = unit.macAddress || 'Não cadastrado';
+
+      // Informações da NF
+      const invoiceSection = document.getElementById('detailsInvoiceSection');
+      if (unit.invoiceNumber) {
+        invoiceSection.style.display = 'block';
+        document.getElementById('detailsInvoiceNumber').textContent = unit.invoiceNumber;
+        document.getElementById('detailsInvoiceDate').textContent = unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A';
+
+        // Data de recebimento - SÓ DATA, SEM HORÁRIO
+        document.getElementById('detailsReceivedAt').textContent = unit.receivedAt ? new Date(unit.receivedAt).toLocaleDateString('pt-BR') : 'Não informado';
+
+        // Fornecedor
+        document.getElementById('detailsSupplier').textContent = unit.supplier || 'Não informado';
+
+        // Data/hora do cadastro em estoque
+        document.getElementById('detailsEntryDate').textContent = unit.entryDate ?
+          new Date(unit.entryDate).toLocaleDateString('pt-BR') + ' ' + new Date(unit.entryDate).toLocaleTimeString('pt-BR') :
+          'Não informado';
+
+        // Arquivo PDF
+        const fileContainer = document.getElementById('detailsInvoiceFileContainer');
+        if (unit.invoiceFile) {
+          fileContainer.style.display = 'block';
+          document.getElementById('detailsInvoiceFile').href = `/${unit.invoiceFile}`;
+        } else {
+          fileContainer.style.display = 'none';
+        }
+
+        // Observações
+        const noteContainer = document.getElementById('detailsNoteContainer');
+        if (unit.note) {
+          noteContainer.style.display = 'block';
+          document.getElementById('detailsNote').textContent = unit.note;
+        } else {
+          noteContainer.style.display = 'none';
+        }
+      } else {
+        invoiceSection.style.display = 'none';
+      }
+
+      // Informações de inutilização
+      const inutilizedSection = document.getElementById('detailsInutilizedSection');
+      if (unit.status === 'INUTILIZED' && unit.inutilizedReason) {
+        inutilizedSection.style.display = 'block';
+        document.getElementById('detailsInutilizedAt').textContent = unit.inutilizedAt ?
+          new Date(unit.inutilizedAt).toLocaleDateString('pt-BR') + ' ' + new Date(unit.inutilizedAt).toLocaleTimeString('pt-BR') :
+          'N/A';
+        document.getElementById('detailsInutilizedReason').textContent = unit.inutilizedReason;
+      } else {
+        inutilizedSection.style.display = 'none';
+      }
+
+      // Data de criação
+      document.getElementById('detailsCreatedAt').textContent = new Date(unit.createdAt).toLocaleDateString('pt-BR') + ' ' + new Date(unit.createdAt).toLocaleTimeString('pt-BR');
+
+      // Abrir modal
+      document.getElementById('unitDetailsModal').style.display = 'block';
+    }
+
+    function hideUnitDetailsModal() {
+      document.getElementById('unitDetailsModal').style.display = 'none';
+    }
+
+    async function inutilizeUnitWithReason() {
+      const reason = document.getElementById('inutilizeUnitReason').value.trim();
+      const awaitingReplacement = document.getElementById('awaitingReplacement').checked;
+
+      if (!reason) {
+        showAlert('Por favor, informe o motivo da inutilização', 'error');
+        return;
+      }
+
+      if (!unitToDelete) return;
+
+      const btn = document.getElementById('confirmInutilizeUnitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="icon-svg" style="animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-opacity="0.25"></circle><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path></svg> Processando...';
+
+      try {
+        const res = await fetch(`/product-instances/${unitToDelete}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            status: 'INUTILIZED',
+            inutilizedReason: reason,
+            inutilizedAt: new Date().toISOString(),
+            awaitingReplacement: awaitingReplacement,
+            replacementRequested: awaitingReplacement
+          })
+        });
+
+        if (res.ok) {
+          hideInutilizeUnitModal();
+
+          if (awaitingReplacement) {
+            // Gerar relatório de troca
+            await generateReplacementReport(unitToDelete);
+            showAlert(`Unidade inutilizada! Relatório de troca gerado com sucesso. Motivo: ${reason}`, 'success');
+          } else {
+            showAlert(`Unidade inutilizada com sucesso! Motivo: ${reason}`, 'success');
+          }
+
+          await loadUnits();
+          await loadProducts();
+        } else {
+          showAlert('Erro ao inutilizar unidade', 'error');
+        }
+      } catch (error) {
+        showAlert('Erro ao inutilizar unidade', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg> Inutilizar e Solicitar Troca';
+      }
+    }
+
+    async function generateReplacementReport(unitId) {
+      try {
+        // Buscar dados completos da unidade
+        const unit = units.find(u => u.id === unitId);
+        if (!unit) return;
+
+        // Criar conteúdo do relatório
+        const reportContent = `
+╔════════════════════════════════════════════════════════════════╗
+║          RELATÓRIO DE SOLICITAÇÃO DE TROCA - NetInFi          ║
+╚════════════════════════════════════════════════════════════════╝
+
+Data de Emissão: ${new Date().toLocaleString('pt-BR')}
+
+────────────────────────────────────────────────────────────────
+INFORMAÇÕES DO PRODUTO
+────────────────────────────────────────────────────────────────
+Produto: ${currentProductName}
+Serial Number: ${unit.serialNumber || 'N/A'}
+MAC Address: ${unit.macAddress || 'N/A'}
+
+────────────────────────────────────────────────────────────────
+INFORMAÇÕES DA NOTA FISCAL DE ENTRADA
+────────────────────────────────────────────────────────────────
+Número da NF: ${unit.invoiceNumber || 'N/A'}
+Data da NF: ${unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A'}
+
+────────────────────────────────────────────────────────────────
+MOTIVO DA INUTILIZAÇÃO
+────────────────────────────────────────────────────────────────
+${unit.inutilizedReason || 'Não informado'}
+
+────────────────────────────────────────────────────────────────
+SOLICITAÇÃO
+────────────────────────────────────────────────────────────────
+Solicitamos a troca da unidade acima devido ao defeito apresentado.
+O produto foi recebido através da Nota Fiscal ${unit.invoiceNumber || 'N/A'}
+em ${unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A'}.
+
+Aguardamos retorno para providências.
+
+────────────────────────────────────────────────────────────────
+NetInFi - Sistema de Gestão de Almoxarifado
+Gerado automaticamente em ${new Date().toLocaleString('pt-BR')}
+────────────────────────────────────────────────────────────────
+        `;
+
+        // Criar e baixar arquivo
+        const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Relatorio_Troca_${currentProductName.replace(/ /g, '_')}_NF${unit.invoiceNumber || 'NA'}_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Erro ao gerar relatório:', error);
+      }
+    }
+
+    async function viewReplacementReport(unitId) {
+      await generateReplacementReport(unitId);
+      showAlert('Relatório de troca baixado com sucesso!', 'success');
+    }
+
+    // ============================================================
+    // VINCULAÇÃO EM MASSA DE SERIAL/MAC
+    // ============================================================
+
+    function selectAllUnits() {
+      const checkboxes = document.querySelectorAll('.unit-checkbox');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+      // Se todos estão marcados, desmarcar todos. Caso contrário, marcar todos
+      checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+      });
+
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const selectedCheckboxes = document.querySelectorAll('.unit-checkbox:checked');
+      const count = selectedCheckboxes.length;
+
+      // Atualizar texto do botão "Selecionar Tudo"
+      const selectAllBtn = document.getElementById('selectAllBtn');
+      if (selectAllBtn) {
+        const allCheckboxes = document.querySelectorAll('.unit-checkbox');
+        const allChecked = allCheckboxes.length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
+        selectAllBtn.textContent = allChecked ? '✗ Desmarcar Tudo' : '✓ Selecionar Tudo';
+      }
+
+      // Mostrar/esconder botão "Vincular MAC/Serial"
+      const bulkFormBtn = document.getElementById('bulkFormBtn');
+      if (bulkFormBtn) {
+        if (count > 0) {
+          bulkFormBtn.style.display = 'block';
+          bulkFormBtn.innerHTML = `
+            <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            Vincular MAC/Serial (${count})
+          `;
+        } else {
+          bulkFormBtn.style.display = 'none';
+        }
+      }
+    }
+
+    function showBulkForm() {
+      const selectedCheckboxes = document.querySelectorAll('.unit-checkbox:checked');
+
+      if (selectedCheckboxes.length === 0) {
+        showAlert('Selecione ao menos uma unidade', 'error');
+        return;
+      }
+
+      // Esconder lista, mostrar formulário
+      document.getElementById('unitsListArea').style.display = 'none';
+      document.getElementById('bulkFormArea').style.display = 'block';
+
+      // Gerar campos do formulário
+      const container = document.getElementById('bulkFormFields');
+      let html = '<div style="display: grid; gap: 12px;">';
+
+      selectedCheckboxes.forEach((checkbox) => {
+        const unitId = parseInt(checkbox.dataset.unitId);
+        const unitIndex = parseInt(checkbox.dataset.unitIndex);
+        const unit = units.find(u => u.id === unitId);
+
+        html += `
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="margin-bottom: 10px;">
+              <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${currentProductName}</span>
+              <code style="background: var(--bg-tertiary); color: var(--primary); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 8px;">#${unitIndex + 1}</code>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; font-weight: 600; text-transform: uppercase;">Serial Number</label>
+                <input type="text"
+                  id="bulk-serial-${unitId}"
+                  value="${unit.serialNumber || ''}"
+                  placeholder="Ex: SN123456"
+                  class="form-control"
+                  style="padding: 8px 10px; font-size: 13px; font-family: monospace;">
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; font-weight: 600; text-transform: uppercase;">MAC Address</label>
+                <input type="text"
+                  id="bulk-mac-${unitId}"
+                  value="${unit.macAddress || ''}"
+                  placeholder="Ex: 00:11:22:33:44:55"
+                  class="form-control"
+                  style="padding: 8px 10px; font-size: 13px; font-family: monospace;">
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function cancelBulkForm() {
+      // Mostrar lista, esconder formulário
+      document.getElementById('unitsListArea').style.display = 'block';
+      document.getElementById('bulkFormArea').style.display = 'none';
+
+      // Limpar formulário
+      document.getElementById('bulkFormFields').innerHTML = '';
+    }
+
+    async function saveBulkForm() {
+      const selectedCheckboxes = document.querySelectorAll('.unit-checkbox:checked');
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Atualizar cada unidade selecionada
+      for (const checkbox of selectedCheckboxes) {
+        const unitId = parseInt(checkbox.dataset.unitId);
+
+        const serial = document.getElementById(`bulk-serial-${unitId}`).value.trim();
+        const mac = document.getElementById(`bulk-mac-${unitId}`).value.trim();
+
+        try {
+          const data = {};
+          if (serial) data.serialNumber = serial;
+          if (mac) data.macAddress = mac;
+
+          // Só fazer update se tiver algum dado
+          if (serial || mac) {
+            const res = await fetch(`/product-instances/${unitId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          errorCount++;
+        }
+      }
+
+      // Fechar formulário
+      cancelBulkForm();
+
+      // Recarregar unidades
+      await loadUnits();
+
+      // Mostrar resultado
+      if (errorCount === 0) {
+        showAlert(`${successCount} unidade${successCount > 1 ? 's' : ''} atualizada${successCount > 1 ? 's' : ''} com sucesso!`, 'success');
+      } else {
+        showAlert(`${successCount} atualizada${successCount > 1 ? 's' : ''}, ${errorCount} erro${errorCount > 1 ? 's' : ''}`, 'warning');
+      }
+    }
+
+    function updateFileLabel(input) {
+      const fileName = input.files[0]?.name;
+      const label = document.getElementById('invoiceFileName');
+      if (fileName) {
+        label.textContent = `✓ Arquivo selecionado: ${fileName}`;
+        label.style.display = 'block';
+      } else {
+        label.style.display = 'none';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

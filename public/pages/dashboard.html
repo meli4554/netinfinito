@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link active">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
+          <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
+          <a href="/pages/transfers.html" class="nav-link">Transferências</a>
+          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container" style="margin-top: 30px;">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">Bem-vindo ao NetInFi</h2>
+      </div>
+      <p style="color: var(--text-secondary);">
+        Sistema de Gestão de Almoxarifado - Usuário: <strong id="userName">Carregando...</strong>
+      </p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-4 mb-3">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div class="stat-value" id="totalProducts">-</div>
+        <div class="stat-label">Produtos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="stat-value" id="totalTechnicians">-</div>
+        <div class="stat-label">Técnicos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+        <div class="stat-value" id="totalTransfers">-</div>
+        <div class="stat-label">Transferências</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+          </svg>
+        </div>
+        <div class="stat-value" id="totalStock">-</div>
+        <div class="stat-label">Itens em Estoque</div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Produtos Recentes</h3>
+        </div>
+        <div id="recentProducts">
+          <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+            <div class="loading" style="margin: 0 auto 10px;"></div>
+            <p>Carregando produtos...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ações Rápidas</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <a href="/pages/products.html" class="action-btn" style="--btn-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            <span>Gerenciar Produtos</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: auto;">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+          <a href="/pages/technicians.html" class="action-btn" style="--btn-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Gerenciar Técnicos</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: auto;">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+          <a href="/pages/transfers.html" class="action-btn" style="--btn-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Nova Transferência</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: auto;">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+          <a href="/pages/reports.html" class="action-btn" style="--btn-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18"></path>
+              <path d="M18 17V9"></path>
+              <path d="M13 17V5"></path>
+              <path d="M8 17v-3"></path>
+            </svg>
+            <span>Ver Relatórios</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: auto;">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    // Proteger página - requer autenticação
+    let currentUser = null;
+
+    async function init() {
+      currentUser = await AuthService.requireAuth();
+      if (!currentUser) return;
+
+      // Mostrar nome do usuário
+      document.getElementById('userName').textContent = currentUser.name;
+
+      // Carregar dados
+      loadDashboardData();
+    }
+
+    async function loadDashboardData() {
+      try {
+        // Carregar produtos
+        const productsResponse = await fetch('/products', { credentials: 'include' });
+        const products = await productsResponse.json();
+        document.getElementById('totalProducts').textContent = products.length;
+
+        // Mostrar produtos recentes
+        displayRecentProducts(products.slice(0, 5));
+
+        // Carregar técnicos
+        const techniciansResponse = await fetch('/technicians', { credentials: 'include' });
+        const technicians = await techniciansResponse.json();
+        document.getElementById('totalTechnicians').textContent = technicians.length;
+
+        // Carregar transferências
+        const transfersResponse = await fetch('/transfers', { credentials: 'include' });
+        const transfers = await transfersResponse.json();
+        document.getElementById('totalTransfers').textContent = transfers.length;
+
+        // Carregar estoque
+        const stockResponse = await fetch('/inventory/summary', { credentials: 'include' });
+        const stock = await stockResponse.json();
+        document.getElementById('totalStock').textContent = stock.length;
+
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        document.getElementById('totalProducts').textContent = '0';
+        document.getElementById('totalTechnicians').textContent = '0';
+        document.getElementById('totalTransfers').textContent = '0';
+        document.getElementById('totalStock').textContent = '0';
+      }
+    }
+
+    function displayRecentProducts(products) {
+      const container = document.getElementById('recentProducts');
+
+      if (products.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum produto cadastrado</p>';
+        return;
+      }
+
+      const html = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Nome</th>
+              <th>Unidade</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(p => `
+              <tr>
+                <td>${p.sku}</td>
+                <td>${p.name}</td>
+                <td>${p.unit}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      container.innerHTML = html;
+    }
+
+    // Inicializar
+    init();
+  </script>
+</body>
+</html>

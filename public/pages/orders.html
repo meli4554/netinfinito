@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos de Compra - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/customers.html" class="nav-link">Clientes</a>
+          <a href="/pages/suppliers.html" class="nav-link">Fornecedores</a>
+          <a href="/pages/orders.html" class="nav-link active">Pedidos</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top: 30px; margin-bottom: 40px;">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Pedidos de Compra</h2>
+      </div>
+
+      <div id="ordersTable">
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading" style="margin: 0 auto 15px;"></div>
+          <p style="color: var(--text-muted);">Carregando pedidos...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    let orders = [];
+
+    async function init() {
+      await AuthService.requireAuth();
+      loadOrders();
+    }
+
+    async function loadOrders() {
+      try {
+        const response = await fetch('/purchase-orders', { credentials: 'include' });
+        orders = await response.json();
+        displayOrders(orders);
+      } catch (error) {
+        document.getElementById('ordersTable').innerHTML = '<div class="alert alert-error">Erro ao carregar pedidos</div>';
+      }
+    }
+
+    function displayOrders(items) {
+      const container = document.getElementById('ordersTable');
+      if (items.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px;">Nenhum pedido encontrado</p>';
+        return;
+      }
+
+      const statusColors = {
+        PENDING: 'info',
+        CONFIRMED: 'success',
+        CANCELLED: 'danger',
+        DELIVERED: 'success'
+      };
+
+      const statusLabels = {
+        PENDING: 'Pendente',
+        CONFIRMED: 'Confirmado',
+        CANCELLED: 'Cancelado',
+        DELIVERED: 'Entregue'
+      };
+
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Fornecedor</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(o => `
+              <tr>
+                <td>${new Date(o.createdAt).toLocaleDateString('pt-BR')}</td>
+                <td><strong>${o.supplier?.name || '-'}</strong></td>
+                <td><strong style="color: var(--primary-light);">R$ ${(o.totalAmount || 0).toFixed(2)}</strong></td>
+                <td><span class="badge badge-${statusColors[o.status]}">${statusLabels[o.status]}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    init();
+  </script>
+</body>
+</html>

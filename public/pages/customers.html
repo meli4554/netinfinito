@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">NI</div>
+          <span>NetInFi</span>
+        </a>
+        <nav class="nav">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/customers.html" class="nav-link active">Clientes</a>
+          <a href="/pages/suppliers.html" class="nav-link">Fornecedores</a>
+          <a href="/pages/orders.html" class="nav-link">Pedidos</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top: 30px; margin-bottom: 40px;">
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title">Gerenciamento de Clientes</h2>
+        <button class="btn btn-primary" onclick="showAddModal()">+ Novo Cliente</button>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <input
+          type="text"
+          id="searchInput"
+          class="form-control"
+          placeholder="🔍 Buscar por nome, CNPJ ou e-mail..."
+          style="max-width: 400px;"
+        >
+      </div>
+
+      <div id="customersTable">
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading" style="margin: 0 auto 15px;"></div>
+          <p style="color: var(--text-muted);">Carregando clientes...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="customerModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div class="modal-backdrop" onclick="hideModal()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);"></div>
+    <div class="modal-content" style="position: relative; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h3 id="modalTitle">Novo Cliente</h3>
+        <button class="modal-close" onclick="hideModal()" style="background: none; border: none; font-size: 32px; color: var(--text-secondary); cursor: pointer;"×</button>
+      </div>
+      <form id="customerForm">
+        <input type="hidden" id="customerId">
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input type="text" id="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ *</label>
+          <input type="text" id="cnpj" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail *</label>
+          <input type="email" id="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="text" id="phone" class="form-control">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar</button>
+          <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    let customers = [];
+
+    async function init() {
+      await AuthService.requireAuth();
+      loadCustomers();
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        const search = e.target.value.toLowerCase();
+        const filtered = customers.filter(c =>
+          c.name.toLowerCase().includes(search) ||
+          c.cnpj.toLowerCase().includes(search) ||
+          c.email.toLowerCase().includes(search)
+        );
+        displayCustomers(filtered);
+      });
+    }
+
+    async function loadCustomers() {
+      try {
+        const response = await fetch('/customers', { credentials: 'include' });
+        customers = await response.json();
+        displayCustomers(customers);
+      } catch (error) {
+        document.getElementById('customersTable').innerHTML = '<div class="alert alert-error">Erro ao carregar clientes</div>';
+      }
+    }
+
+    function displayCustomers(items) {
+      const container = document.getElementById('customersTable');
+      if (items.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px;">Nenhum cliente encontrado</p>';
+        return;
+      }
+      container.innerHTML = `
+        <table class="table">
+          <thead><tr><th>Nome</th><th>CNPJ</th><th>E-mail</th><th>Telefone</th><th>Ações</th></tr></thead>
+          <tbody>
+            ${items.map(c => `
+              <tr>
+                <td><strong>${c.name}</strong></td>
+                <td>${c.cnpj}</td>
+                <td>${c.email}</td>
+                <td>${c.phone || '-'}</td>
+                <td><button class="btn btn-sm btn-secondary" onclick="editCustomer('${c.id}')">Editar</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function showAddModal() {
+      document.getElementById('modalTitle').textContent = 'Novo Cliente';
+      document.getElementById('customerForm').reset();
+      document.getElementById('customerId').value = '';
+      document.getElementById('customerModal').classList.remove('hidden');
+    }
+
+    function editCustomer(id) {
+      const customer = customers.find(c => c.id === id);
+      if (!customer) return;
+      document.getElementById('modalTitle').textContent = 'Editar Cliente';
+      document.getElementById('customerId').value = customer.id;
+      document.getElementById('name').value = customer.name;
+      document.getElementById('cnpj').value = customer.cnpj;
+      document.getElementById('email').value = customer.email;
+      document.getElementById('phone').value = customer.phone || '';
+      document.getElementById('customerModal').classList.remove('hidden');
+    }
+
+    function hideModal() {
+      document.getElementById('customerModal').classList.add('hidden');
+    }
+
+    document.getElementById('customerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('customerId').value;
+      const data = {
+        name: document.getElementById('name').value,
+        cnpj: document.getElementById('cnpj').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value || null
+      };
+      try {
+        const url = id ? `/customers/${id}` : '/customers';
+        const method = id ? 'PATCH' : 'POST';
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Erro ao salvar cliente');
+        hideModal();
+        loadCustomers();
+        showAlert(id ? 'Cliente atualizado!' : 'Cliente criado!', 'success');
+      } catch (error) {
+        showAlert(error.message, 'error');
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

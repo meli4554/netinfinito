@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NetInFi - Sistema de Gestão de Almoxarifado">
+  <title>Login - NetInFi</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <div class="login-logo">NI</div>
+        <h1 class="login-title">NetInFi</h1>
+        <p class="login-subtitle">Sistema de Gestão de Almoxarifado</p>
+      </div>
+
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            class="form-control"
+            placeholder="seu@email.com"
+            value="admin@netinfi.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            class="form-control"
+            placeholder="••••••••"
+            value="Admin123!"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary login-btn">
+          Entrar no Sistema
+        </button>
+
+        <div class="text-center">
+          <div class="gov-badge">Sistema Seguro</div>
+        </div>
+      </form>
+
+      <div class="login-footer">
+        <p>NetInFi © 2025 - Sistema de Gestão de Almoxarifado</p>
+        <p style="margin-top: 8px; font-size: 11px;">Desenvolvido com segurança e eficiência</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    // Verifica se já está logado
+    AuthService.checkAuth().then(user => {
+      if (user) {
+        window.location.href = '/pages/dashboard.html';
+      }
+    });
+
+    // Handle do formulário de login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      showLoading(submitBtn);
+
+      try {
+        const data = await AuthService.login(email, password);
+        showAlert('Login realizado com sucesso!', 'success');
+
+        setTimeout(() => {
+          window.location.href = '/pages/dashboard.html';
+        }, 500);
+      } catch (error) {
+        hideLoading(submitBtn, 'Entrar no Sistema');
+        showAlert(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      }
+    });
+  </script>
+</body>
+</html>
