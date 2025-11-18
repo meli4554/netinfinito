@@ -12,7 +12,9 @@ import {
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { TransfersService } from './transfers.service'
-import { TransferStatus, TransferItemStatus } from '@prisma/client'
+
+type TransferStatus = 'PENDING' | 'IN_HANDS' | 'PARTIALLY_USED' | 'USED' | 'PARTIALLY_RETURNED' | 'RETURNED' | 'CANCELED'
+type TransferItemStatus = 'PENDING' | 'IN_HANDS' | 'USED' | 'RETURNED'
 
 @Controller('transfers')
 export class TransfersController {

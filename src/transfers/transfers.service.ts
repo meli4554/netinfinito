@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
-import { TransferStatus } from '@prisma/client'
+import { DatabaseService } from '../database/database.service'
+
+type TransferStatus = 'PENDING' | 'TRANSFERRED' | 'IN_HANDS' | 'PARTIALLY_USED' | 'PARTIALLY_RETURNED' | 'USED' | 'RETURNED' | 'RECEIVED'
 
 @Injectable()
 export class TransfersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private db: DatabaseService) {}
 
   async create(data: {
     fromWarehouseId: number
@@ -21,272 +22,598 @@ export class TransfersService {
     createdBy?: string
     note?: string
   }) {
-    const lastTransfer = await this.prisma.transfer.findFirst({
-      orderBy: { id: 'desc' },
-    })
+    // Buscar último transfer para gerar número
+    const lastTransfer = await this.db.queryOne<any>(
+      'SELECT id FROM Transfer ORDER BY id DESC LIMIT 1'
+    )
 
     const nextNumber = lastTransfer
       ? `TRF-${String(lastTransfer.id + 1).padStart(6, '0')}`
       : 'TRF-000001'
 
-    return this.prisma.transfer.create({
-      data: {
-        number: nextNumber,
-        fromWarehouseId: data.fromWarehouseId,
-        toWarehouseId: data.toWarehouseId,
-        technicianId: data.technicianId,
-        createdBy: data.createdBy,
-        note: data.note,
-        items: {
-          create: data.items.map((item) => ({
+    // Criar transfer
+    const result = await this.db.execute(
+      `INSERT INTO Transfer (number, fromWarehouseId, toWarehouseId, technicianId, createdBy, note)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [nextNumber, data.fromWarehouseId, data.toWarehouseId, data.technicianId, data.createdBy || null, data.note || null]
+    )
+
+    const transferId = result.insertId
+
+    // Criar items
+    for (const item of data.items) {
+      await this.db.execute(
+        `INSERT INTO TransferItem (transferId, productId, productInstanceId, serialNumber, macAddress, invoiceNumber, quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          transferId,
+          item.productId,
+          item.productInstanceId || null,
+          item.serialNumber || null,
+          item.macAddress || null,
+          item.invoiceNumber || null,
+          item.quantity
+        ]
+      )
+    }
+
+    return this.findOne(transferId)
+  }
+
+  async list() {
+    const transfers = await this.db.query<any>(`
+      SELECT
+        t.*,
+        fw.id as fromWarehouse_id,
+        fw.name as fromWarehouse_name,
+        fw.code as fromWarehouse_code,
+        fw.type as fromWarehouse_type,
+        tw.id as toWarehouse_id,
+        tw.name as toWarehouse_name,
+        tw.code as toWarehouse_code,
+        tw.type as toWarehouse_type,
+        tech.id as technician_id,
+        tech.name as technician_name,
+        tech.category as technician_category,
+        tech.phone as technician_phone,
+        tech.email as technician_email
+      FROM Transfer t
+      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      ORDER BY t.createdAt DESC
+    `)
+
+    // Buscar items para cada transfer
+    const transfersWithItems = await Promise.all(
+      transfers.map(async (transfer) => {
+        const items = await this.db.query<any>(`
+          SELECT
+            ti.*,
+            p.id as product_id,
+            p.sku as product_sku,
+            p.name as product_name,
+            p.unit as product_unit
+          FROM TransferItem ti
+          INNER JOIN Product p ON p.id = ti.productId
+          WHERE ti.transferId = ?
+        `, [transfer.id])
+
+        return {
+          id: transfer.id,
+          number: transfer.number,
+          status: transfer.status,
+          fromWarehouseId: transfer.fromWarehouseId,
+          toWarehouseId: transfer.toWarehouseId,
+          technicianId: transfer.technicianId,
+          createdBy: transfer.createdBy,
+          note: transfer.note,
+          transferredAt: transfer.transferredAt,
+          receivedAt: transfer.receivedAt,
+          signatureType: transfer.signatureType,
+          signatureFile: transfer.signatureFile,
+          createdAt: transfer.createdAt,
+          updatedAt: transfer.updatedAt,
+          fromWarehouse: transfer.fromWarehouse_id ? {
+            id: transfer.fromWarehouse_id,
+            name: transfer.fromWarehouse_name,
+            code: transfer.fromWarehouse_code,
+            type: transfer.fromWarehouse_type
+          } : null,
+          toWarehouse: transfer.toWarehouse_id ? {
+            id: transfer.toWarehouse_id,
+            name: transfer.toWarehouse_name,
+            code: transfer.toWarehouse_code,
+            type: transfer.toWarehouse_type
+          } : null,
+          technician: transfer.technician_id ? {
+            id: transfer.technician_id,
+            name: transfer.technician_name,
+            category: transfer.technician_category,
+            phone: transfer.technician_phone,
+            email: transfer.technician_email
+          } : null,
+          items: items.map(item => ({
+            id: item.id,
+            transferId: item.transferId,
             productId: item.productId,
             productInstanceId: item.productInstanceId,
             serialNumber: item.serialNumber,
             macAddress: item.macAddress,
             invoiceNumber: item.invoiceNumber,
             quantity: item.quantity,
-          })),
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        fromWarehouse: true,
-        toWarehouse: true,
-        technician: true,
-      },
-    })
-  }
+            status: item.status,
+            usedAt: item.usedAt,
+            returnedAt: item.returnedAt,
+            ixcClientCode: item.ixcClientCode,
+            usageNote: item.usageNote,
+            product: {
+              id: item.product_id,
+              sku: item.product_sku,
+              name: item.product_name,
+              unit: item.product_unit
+            }
+          }))
+        }
+      })
+    )
 
-  async list() {
-    return this.prisma.transfer.findMany({
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        fromWarehouse: true,
-        toWarehouse: true,
-        technician: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    return transfersWithItems
   }
 
   async findOne(id: number) {
-    return this.prisma.transfer.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        fromWarehouse: true,
-        toWarehouse: true,
-        technician: true,
-      },
-    })
+    const transfer = await this.db.queryOne<any>(`
+      SELECT
+        t.*,
+        fw.id as fromWarehouse_id,
+        fw.name as fromWarehouse_name,
+        fw.code as fromWarehouse_code,
+        fw.type as fromWarehouse_type,
+        tw.id as toWarehouse_id,
+        tw.name as toWarehouse_name,
+        tw.code as toWarehouse_code,
+        tw.type as toWarehouse_type,
+        tech.id as technician_id,
+        tech.name as technician_name,
+        tech.category as technician_category,
+        tech.phone as technician_phone,
+        tech.email as technician_email
+      FROM Transfer t
+      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      WHERE t.id = ?
+    `, [id])
+
+    if (!transfer) return null
+
+    const items = await this.db.query<any>(`
+      SELECT
+        ti.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit
+      FROM TransferItem ti
+      INNER JOIN Product p ON p.id = ti.productId
+      WHERE ti.transferId = ?
+    `, [id])
+
+    return {
+      id: transfer.id,
+      number: transfer.number,
+      status: transfer.status,
+      fromWarehouseId: transfer.fromWarehouseId,
+      toWarehouseId: transfer.toWarehouseId,
+      technicianId: transfer.technicianId,
+      createdBy: transfer.createdBy,
+      note: transfer.note,
+      transferredAt: transfer.transferredAt,
+      receivedAt: transfer.receivedAt,
+      signatureType: transfer.signatureType,
+      signatureFile: transfer.signatureFile,
+      createdAt: transfer.createdAt,
+      updatedAt: transfer.updatedAt,
+      fromWarehouse: transfer.fromWarehouse_id ? {
+        id: transfer.fromWarehouse_id,
+        name: transfer.fromWarehouse_name,
+        code: transfer.fromWarehouse_code,
+        type: transfer.fromWarehouse_type
+      } : null,
+      toWarehouse: transfer.toWarehouse_id ? {
+        id: transfer.toWarehouse_id,
+        name: transfer.toWarehouse_name,
+        code: transfer.toWarehouse_code,
+        type: transfer.toWarehouse_type
+      } : null,
+      technician: transfer.technician_id ? {
+        id: transfer.technician_id,
+        name: transfer.technician_name,
+        category: transfer.technician_category,
+        phone: transfer.technician_phone,
+        email: transfer.technician_email
+      } : null,
+      items: items.map(item => ({
+        id: item.id,
+        transferId: item.transferId,
+        productId: item.productId,
+        productInstanceId: item.productInstanceId,
+        serialNumber: item.serialNumber,
+        macAddress: item.macAddress,
+        invoiceNumber: item.invoiceNumber,
+        quantity: item.quantity,
+        status: item.status,
+        usedAt: item.usedAt,
+        returnedAt: item.returnedAt,
+        ixcClientCode: item.ixcClientCode,
+        usageNote: item.usageNote,
+        product: {
+          id: item.product_id,
+          sku: item.product_sku,
+          name: item.product_name,
+          unit: item.product_unit
+        }
+      }))
+    }
   }
 
   async setStatus(id: number, status: TransferStatus) {
-    const transfer = await this.prisma.transfer.update({
-      where: { id },
-      data: {
-        status,
-        transferredAt: status === 'TRANSFERRED' ? new Date() : undefined,
-        receivedAt: status === 'RECEIVED' ? new Date() : undefined,
-      },
-      include: {
-        items: true,
-      },
-    })
+    const now = new Date()
+    const updates: string[] = ['status = ?']
+    const values: any[] = [status]
+
+    if (status === 'TRANSFERRED') {
+      updates.push('transferredAt = ?')
+      values.push(now)
+    }
+    if (status === 'RECEIVED') {
+      updates.push('receivedAt = ?')
+      values.push(now)
+    }
+
+    values.push(id)
+
+    await this.db.execute(
+      `UPDATE Transfer SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    )
+
+    // Buscar items da transferência
+    const items = await this.db.query<any>(
+      'SELECT * FROM TransferItem WHERE transferId = ?',
+      [id]
+    )
 
     // Se o status for TRANSFERRED, criar movimentos de estoque
     if (status === 'TRANSFERRED') {
-      for (const item of transfer.items) {
+      const transfer = await this.db.queryOne<any>(
+        'SELECT * FROM Transfer WHERE id = ?',
+        [id]
+      )
+
+      for (const item of items) {
         // Saída do almoxarifado de origem
-        await this.prisma.stockMovement.create({
-          data: {
-            productId: item.productId,
-            type: 'OUT',
-            quantity: item.quantity,
-            referenceType: 'TRANSFER',
-            referenceId: transfer.id,
-            occurredAt: new Date(),
-            note: `Transferência ${transfer.number} para técnico`,
-          },
-        })
+        await this.db.execute(
+          `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            item.productId,
+            'OUT',
+            item.quantity,
+            'TRANSFER',
+            id,
+            now,
+            `Transferência ${transfer.number} para técnico`
+          ]
+        )
 
         // Entrada no almoxarifado do técnico
-        await this.prisma.stockMovement.create({
-          data: {
-            productId: item.productId,
-            type: 'TRANSFER',
-            quantity: item.quantity,
-            technicianId: transfer.technicianId,
-            referenceType: 'TRANSFER',
-            referenceId: transfer.id,
-            occurredAt: new Date(),
-            note: `Transferência ${transfer.number} recebida`,
-          },
-        })
+        await this.db.execute(
+          `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            item.productId,
+            'TRANSFER',
+            item.quantity,
+            transfer.technicianId,
+            'TRANSFER',
+            id,
+            now,
+            `Transferência ${transfer.number} recebida`
+          ]
+        )
       }
     }
 
-    return transfer
+    return this.findOne(id)
   }
 
   async getByTechnician(technicianId: number) {
-    return this.prisma.transfer.findMany({
-      where: {
-        technicianId,
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        fromWarehouse: true,
-        toWarehouse: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const transfers = await this.db.query<any>(`
+      SELECT
+        t.*,
+        fw.id as fromWarehouse_id,
+        fw.name as fromWarehouse_name,
+        fw.code as fromWarehouse_code,
+        fw.type as fromWarehouse_type,
+        tw.id as toWarehouse_id,
+        tw.name as toWarehouse_name,
+        tw.code as toWarehouse_code,
+        tw.type as toWarehouse_type
+      FROM Transfer t
+      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
+      WHERE t.technicianId = ?
+      ORDER BY t.createdAt DESC
+    `, [technicianId])
+
+    // Buscar items para cada transfer
+    const transfersWithItems = await Promise.all(
+      transfers.map(async (transfer) => {
+        const items = await this.db.query<any>(`
+          SELECT
+            ti.*,
+            p.id as product_id,
+            p.sku as product_sku,
+            p.name as product_name,
+            p.unit as product_unit
+          FROM TransferItem ti
+          INNER JOIN Product p ON p.id = ti.productId
+          WHERE ti.transferId = ?
+        `, [transfer.id])
+
+        return {
+          id: transfer.id,
+          number: transfer.number,
+          status: transfer.status,
+          fromWarehouseId: transfer.fromWarehouseId,
+          toWarehouseId: transfer.toWarehouseId,
+          technicianId: transfer.technicianId,
+          createdBy: transfer.createdBy,
+          note: transfer.note,
+          transferredAt: transfer.transferredAt,
+          receivedAt: transfer.receivedAt,
+          createdAt: transfer.createdAt,
+          updatedAt: transfer.updatedAt,
+          fromWarehouse: transfer.fromWarehouse_id ? {
+            id: transfer.fromWarehouse_id,
+            name: transfer.fromWarehouse_name,
+            code: transfer.fromWarehouse_code,
+            type: transfer.fromWarehouse_type
+          } : null,
+          toWarehouse: transfer.toWarehouse_id ? {
+            id: transfer.toWarehouse_id,
+            name: transfer.toWarehouse_name,
+            code: transfer.toWarehouse_code,
+            type: transfer.toWarehouse_type
+          } : null,
+          items: items.map(item => ({
+            id: item.id,
+            transferId: item.transferId,
+            productId: item.productId,
+            productInstanceId: item.productInstanceId,
+            serialNumber: item.serialNumber,
+            macAddress: item.macAddress,
+            invoiceNumber: item.invoiceNumber,
+            quantity: item.quantity,
+            status: item.status,
+            usedAt: item.usedAt,
+            returnedAt: item.returnedAt,
+            ixcClientCode: item.ixcClientCode,
+            usageNote: item.usageNote,
+            product: {
+              id: item.product_id,
+              sku: item.product_sku,
+              name: item.product_name,
+              unit: item.product_unit
+            }
+          }))
+        }
+      })
+    )
+
+    return transfersWithItems
   }
 
   async listActive() {
-    return this.prisma.transfer.findMany({
-      where: {
-        status: {
-          in: ['PENDING', 'IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'],
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        technician: true,
-        fromWarehouse: true,
-        toWarehouse: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const transfers = await this.db.query<any>(`
+      SELECT
+        t.*,
+        fw.id as fromWarehouse_id,
+        fw.name as fromWarehouse_name,
+        fw.code as fromWarehouse_code,
+        tw.id as toWarehouse_id,
+        tw.name as toWarehouse_name,
+        tw.code as toWarehouse_code,
+        tech.id as technician_id,
+        tech.name as technician_name,
+        tech.category as technician_category
+      FROM Transfer t
+      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      WHERE t.status IN ('PENDING', 'IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED')
+      ORDER BY t.createdAt DESC
+    `)
+
+    // Buscar items para cada transfer
+    const transfersWithItems = await Promise.all(
+      transfers.map(async (transfer) => {
+        const items = await this.db.query<any>(`
+          SELECT
+            ti.*,
+            p.id as product_id,
+            p.sku as product_sku,
+            p.name as product_name,
+            p.unit as product_unit
+          FROM TransferItem ti
+          INNER JOIN Product p ON p.id = ti.productId
+          WHERE ti.transferId = ?
+        `, [transfer.id])
+
+        return {
+          id: transfer.id,
+          number: transfer.number,
+          status: transfer.status,
+          fromWarehouseId: transfer.fromWarehouseId,
+          toWarehouseId: transfer.toWarehouseId,
+          technicianId: transfer.technicianId,
+          createdBy: transfer.createdBy,
+          note: transfer.note,
+          transferredAt: transfer.transferredAt,
+          receivedAt: transfer.receivedAt,
+          createdAt: transfer.createdAt,
+          updatedAt: transfer.updatedAt,
+          fromWarehouse: transfer.fromWarehouse_id ? {
+            id: transfer.fromWarehouse_id,
+            name: transfer.fromWarehouse_name,
+            code: transfer.fromWarehouse_code
+          } : null,
+          toWarehouse: transfer.toWarehouse_id ? {
+            id: transfer.toWarehouse_id,
+            name: transfer.toWarehouse_name,
+            code: transfer.toWarehouse_code
+          } : null,
+          technician: transfer.technician_id ? {
+            id: transfer.technician_id,
+            name: transfer.technician_name,
+            category: transfer.technician_category
+          } : null,
+          items: items.map(item => ({
+            id: item.id,
+            transferId: item.transferId,
+            productId: item.productId,
+            productInstanceId: item.productInstanceId,
+            serialNumber: item.serialNumber,
+            macAddress: item.macAddress,
+            invoiceNumber: item.invoiceNumber,
+            quantity: item.quantity,
+            status: item.status,
+            usedAt: item.usedAt,
+            returnedAt: item.returnedAt,
+            ixcClientCode: item.ixcClientCode,
+            usageNote: item.usageNote,
+            product: {
+              id: item.product_id,
+              sku: item.product_sku,
+              name: item.product_name,
+              unit: item.product_unit
+            }
+          }))
+        }
+      })
+    )
+
+    return transfersWithItems
   }
 
   async searchProductBySerial(query: string) {
-    return this.prisma.productInstance.findMany({
-      where: {
-        OR: [
-          { serialNumber: { contains: query } },
-          { macAddress: { contains: query } },
-        ],
-        status: 'AVAILABLE',
-      },
-      include: {
-        product: true,
-      },
-      take: 10,
-    })
+    const instances = await this.db.query<any>(`
+      SELECT
+        pi.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit
+      FROM ProductInstance pi
+      INNER JOIN Product p ON p.id = pi.productId
+      WHERE (pi.serialNumber LIKE ? OR pi.macAddress LIKE ? OR p.name LIKE ? OR p.sku LIKE ?)
+        AND pi.status = 'AVAILABLE'
+      LIMIT 10
+    `, [`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`])
+
+    return instances.map(inst => ({
+      id: inst.id,
+      productId: inst.productId,
+      serialNumber: inst.serialNumber,
+      macAddress: inst.macAddress,
+      status: inst.status,
+      invoiceNumber: inst.invoiceNumber,
+      invoiceDate: inst.invoiceDate,
+      invoiceFile: inst.invoiceFile,
+      receivedAt: inst.receivedAt,
+      supplier: inst.supplier,
+      entryDate: inst.entryDate,
+      note: inst.note,
+      product: {
+        id: inst.product_id,
+        sku: inst.product_sku,
+        name: inst.product_name,
+        unit: inst.product_unit
+      }
+    }))
   }
 
   async markAsTransferred(id: number) {
-    return this.prisma.transfer.update({
-      where: { id },
-      data: {
-        status: 'IN_HANDS',
-        transferredAt: new Date(),
-        items: {
-          updateMany: {
-            where: { transferId: id },
-            data: { status: 'IN_HANDS' },
-          },
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        technician: true,
-      },
-    })
+    await this.db.execute(
+      'UPDATE Transfer SET status = ?, transferredAt = ? WHERE id = ?',
+      ['IN_HANDS', new Date(), id]
+    )
+
+    await this.db.execute(
+      'UPDATE TransferItem SET status = ? WHERE transferId = ?',
+      ['IN_HANDS', id]
+    )
+
+    return this.findOne(id)
   }
 
   async markItemAsUsed(
     itemId: number,
     data: { ixcClientCode?: string; usageNote?: string },
   ) {
-    const item = await this.prisma.transferItem.update({
-      where: { id: itemId },
-      data: {
-        status: 'USED',
-        usedAt: new Date(),
-        ixcClientCode: data.ixcClientCode,
-        usageNote: data.usageNote,
-      },
-      include: {
-        transfer: {
-          include: {
-            items: true,
-          },
-        },
-      },
-    })
+    await this.db.execute(
+      'UPDATE TransferItem SET status = ?, usedAt = ?, ixcClientCode = ?, usageNote = ? WHERE id = ?',
+      ['USED', new Date(), data.ixcClientCode || null, data.usageNote || null, itemId]
+    )
+
+    const item = await this.db.queryOne<any>(
+      'SELECT * FROM TransferItem WHERE id = ?',
+      [itemId]
+    )
 
     // Atualizar status da transferência
-    await this.updateTransferStatus(item.transfer.id)
+    await this.updateTransferStatus(item.transferId)
 
     return item
   }
 
   async markItemAsReturned(itemId: number) {
-    const item = await this.prisma.transferItem.update({
-      where: { id: itemId },
-      data: {
-        status: 'RETURNED',
-        returnedAt: new Date(),
-      },
-      include: {
-        transfer: {
-          include: {
-            items: true,
-          },
-        },
-      },
-    })
+    await this.db.execute(
+      'UPDATE TransferItem SET status = ?, returnedAt = ? WHERE id = ?',
+      ['RETURNED', new Date(), itemId]
+    )
+
+    const item = await this.db.queryOne<any>(
+      'SELECT * FROM TransferItem WHERE id = ?',
+      [itemId]
+    )
 
     // Atualizar status da transferência
-    await this.updateTransferStatus(item.transfer.id)
+    await this.updateTransferStatus(item.transferId)
 
     return item
   }
 
   private async updateTransferStatus(transferId: number) {
-    const transfer = await this.prisma.transfer.findUnique({
-      where: { id: transferId },
-      include: { items: true },
-    })
+    const items = await this.db.query<any>(
+      'SELECT * FROM TransferItem WHERE transferId = ?',
+      [transferId]
+    )
+
+    if (items.length === 0) return
+
+    const allUsed = items.every((item: any) => item.status === 'USED')
+    const allReturned = items.every((item: any) => item.status === 'RETURNED')
+    const someUsed = items.some((item: any) => item.status === 'USED')
+    const someReturned = items.some((item: any) => item.status === 'RETURNED')
+
+    const transfer = await this.db.queryOne<any>(
+      'SELECT status FROM Transfer WHERE id = ?',
+      [transferId]
+    )
 
     if (!transfer) return
-
-    const allUsed = transfer.items.every((item) => item.status === 'USED')
-    const allReturned = transfer.items.every((item) => item.status === 'RETURNED')
-    const someUsed = transfer.items.some((item) => item.status === 'USED')
-    const someReturned = transfer.items.some((item) => item.status === 'RETURNED')
 
     let newStatus = transfer.status
 
@@ -301,10 +628,10 @@ export class TransfersService {
     }
 
     if (newStatus !== transfer.status) {
-      await this.prisma.transfer.update({
-        where: { id: transferId },
-        data: { status: newStatus },
-      })
+      await this.db.execute(
+        'UPDATE Transfer SET status = ? WHERE id = ?',
+        [newStatus, transferId]
+      )
     }
   }
 
@@ -313,15 +640,12 @@ export class TransfersService {
     type: 'digital' | 'upload',
     file?: Express.Multer.File,
   ) {
-    // TODO: Implementar upload do arquivo
-    // Por enquanto, apenas atualizar o tipo
-    return this.prisma.transfer.update({
-      where: { id },
-      data: {
-        signatureType: type,
-        signatureFile: file ? `signatures/${file.filename}` : null,
-      },
-    })
+    await this.db.execute(
+      'UPDATE Transfer SET signatureType = ?, signatureFile = ? WHERE id = ?',
+      [type, file ? `signatures/${file.filename}` : null, id]
+    )
+
+    return this.findOne(id)
   }
 
   async generateReport(id: number) {

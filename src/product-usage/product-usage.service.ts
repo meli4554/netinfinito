@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
+import { DatabaseService } from '../database/database.service'
 
 @Injectable()
 export class ProductUsageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private db: DatabaseService) {}
 
   async create(data: {
     technicianId: number
@@ -13,86 +13,218 @@ export class ProductUsageService {
     serviceOrder?: string
     clientName?: string
   }) {
-    const usage = await this.prisma.productUsage.create({
-      data,
-      include: {
-        product: true,
-        technician: true,
-      },
-    })
+    // Criar usage
+    const result = await this.db.execute(
+      `INSERT INTO ProductUsage (technicianId, productId, quantity, note, serviceOrder, clientName)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        data.technicianId,
+        data.productId,
+        data.quantity,
+        data.note || null,
+        data.serviceOrder || null,
+        data.clientName || null
+      ]
+    )
+
+    const usageId = result.insertId
 
     // Criar movimento de estoque (saída do almoxarifado do técnico)
-    await this.prisma.stockMovement.create({
-      data: {
-        productId: data.productId,
-        type: 'OUT',
-        quantity: data.quantity,
-        technicianId: data.technicianId,
-        referenceType: 'USAGE',
-        referenceId: usage.id,
-        occurredAt: new Date(),
-        note: data.note || `Uso registrado - ${data.clientName || 'Cliente'}`,
-      },
-    })
+    await this.db.execute(
+      `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.productId,
+        'OUT',
+        data.quantity,
+        data.technicianId,
+        'USAGE',
+        usageId,
+        new Date(),
+        data.note || `Uso registrado - ${data.clientName || 'Cliente'}`
+      ]
+    )
 
-    return usage
+    // Buscar usage criado com relacionamentos
+    const usage = await this.db.queryOne<any>(`
+      SELECT
+        pu.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit,
+        t.id as technician_id,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.id = ?
+    `, [usageId])
+
+    return {
+      id: usage.id,
+      technicianId: usage.technicianId,
+      productId: usage.productId,
+      quantity: usage.quantity,
+      usedAt: usage.usedAt,
+      note: usage.note,
+      serviceOrder: usage.serviceOrder,
+      clientName: usage.clientName,
+      product: {
+        id: usage.product_id,
+        sku: usage.product_sku,
+        name: usage.product_name,
+        unit: usage.product_unit
+      },
+      technician: {
+        id: usage.technician_id,
+        name: usage.technician_name,
+        category: usage.technician_category
+      }
+    }
   }
 
   async list() {
-    return this.prisma.productUsage.findMany({
-      include: {
-        product: true,
-        technician: true,
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit,
+        t.id as technician_id,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      ORDER BY pu.usedAt DESC
+    `)
+
+    return usages.map(usage => ({
+      id: usage.id,
+      technicianId: usage.technicianId,
+      productId: usage.productId,
+      quantity: usage.quantity,
+      usedAt: usage.usedAt,
+      note: usage.note,
+      serviceOrder: usage.serviceOrder,
+      clientName: usage.clientName,
+      product: {
+        id: usage.product_id,
+        sku: usage.product_sku,
+        name: usage.product_name,
+        unit: usage.product_unit
       },
-      orderBy: {
-        usedAt: 'desc',
-      },
-    })
+      technician: {
+        id: usage.technician_id,
+        name: usage.technician_name,
+        category: usage.technician_category
+      }
+    }))
   }
 
   async getByTechnician(technicianId: number) {
-    return this.prisma.productUsage.findMany({
-      where: {
-        technicianId,
-      },
-      include: {
-        product: true,
-      },
-      orderBy: {
-        usedAt: 'desc',
-      },
-    })
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      WHERE pu.technicianId = ?
+      ORDER BY pu.usedAt DESC
+    `, [technicianId])
+
+    return usages.map(usage => ({
+      id: usage.id,
+      technicianId: usage.technicianId,
+      productId: usage.productId,
+      quantity: usage.quantity,
+      usedAt: usage.usedAt,
+      note: usage.note,
+      serviceOrder: usage.serviceOrder,
+      clientName: usage.clientName,
+      product: {
+        id: usage.product_id,
+        sku: usage.product_sku,
+        name: usage.product_name,
+        unit: usage.product_unit
+      }
+    }))
   }
 
   async getByProduct(productId: number) {
-    return this.prisma.productUsage.findMany({
-      where: {
-        productId,
-      },
-      include: {
-        technician: true,
-      },
-      orderBy: {
-        usedAt: 'desc',
-      },
-    })
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        t.id as technician_id,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.productId = ?
+      ORDER BY pu.usedAt DESC
+    `, [productId])
+
+    return usages.map(usage => ({
+      id: usage.id,
+      technicianId: usage.technicianId,
+      productId: usage.productId,
+      quantity: usage.quantity,
+      usedAt: usage.usedAt,
+      note: usage.note,
+      serviceOrder: usage.serviceOrder,
+      clientName: usage.clientName,
+      technician: {
+        id: usage.technician_id,
+        name: usage.technician_name,
+        category: usage.technician_category
+      }
+    }))
   }
 
   async getByPeriod(startDate: Date, endDate: Date) {
-    return this.prisma.productUsage.findMany({
-      where: {
-        usedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit,
+        t.id as technician_id,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.usedAt >= ? AND pu.usedAt <= ?
+      ORDER BY pu.usedAt DESC
+    `, [startDate, endDate])
+
+    return usages.map(usage => ({
+      id: usage.id,
+      technicianId: usage.technicianId,
+      productId: usage.productId,
+      quantity: usage.quantity,
+      usedAt: usage.usedAt,
+      note: usage.note,
+      serviceOrder: usage.serviceOrder,
+      clientName: usage.clientName,
+      product: {
+        id: usage.product_id,
+        sku: usage.product_sku,
+        name: usage.product_name,
+        unit: usage.product_unit
       },
-      include: {
-        product: true,
-        technician: true,
-      },
-      orderBy: {
-        usedAt: 'desc',
-      },
-    })
+      technician: {
+        id: usage.technician_id,
+        name: usage.technician_name,
+        category: usage.technician_category
+      }
+    }))
   }
 }

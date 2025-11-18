@@ -9,7 +9,8 @@ import {
   Post,
 } from '@nestjs/common'
 import { TechniciansService } from './technicians.service'
-import { TechnicianCategory } from '@prisma/client'
+
+type TechnicianCategory = 'FIBRA' | 'RADIO' | 'INSTALACAO' | 'MANUTENCAO' | 'OUTROS'
 
 @Controller('technicians')
 export class TechniciansController {

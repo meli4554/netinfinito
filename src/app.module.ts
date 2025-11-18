@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { PrismaModule } from './prisma/prisma.module'
+import { DatabaseModule } from './database/database.module'
 import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
 import { ProductsModule } from './products/products.module'
@@ -15,7 +15,7 @@ import { UploadModule } from './upload/upload.module'
 
 @Module({
   imports: [
-    PrismaModule,
+    DatabaseModule,
     AuthModule,
     UsersModule,
     ProductsModule,

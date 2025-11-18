@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
+import { DatabaseService } from '../database/database.service'
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private db: DatabaseService) {}
 
   async monthlyUsageByTechnician(year: number, month: number) {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
-    const usages = await this.prisma.productUsage.findMany({
-      where: {
-        usedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        product: true,
-        technician: true,
-      },
-    })
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.sku,
+        p.name,
+        p.unit,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.usedAt >= ? AND pu.usedAt <= ?
+    `, [startDate, endDate])
 
     const technicianMap = new Map()
 
@@ -29,8 +30,8 @@ export class ReportsService {
       if (!technicianMap.has(techId)) {
         technicianMap.set(techId, {
           technicianId: techId,
-          technicianName: usage.technician.name,
-          category: usage.technician.category,
+          technicianName: usage.technician_name,
+          category: usage.technician_category,
           products: new Map(),
           totalUsages: 0,
         })
@@ -42,9 +43,9 @@ export class ReportsService {
       if (!techData.products.has(usage.productId)) {
         techData.products.set(usage.productId, {
           productId: usage.productId,
-          sku: usage.product.sku,
-          name: usage.product.name,
-          unit: usage.product.unit,
+          sku: usage.sku,
+          name: usage.name,
+          unit: usage.unit,
           quantity: 0,
         })
       }
@@ -63,18 +64,18 @@ export class ReportsService {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
-    const usages = await this.prisma.productUsage.findMany({
-      where: {
-        usedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        product: true,
-        technician: true,
-      },
-    })
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.sku,
+        p.name,
+        p.unit,
+        t.name as technician_name
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.usedAt >= ? AND pu.usedAt <= ?
+    `, [startDate, endDate])
 
     const productMap = new Map()
 
@@ -83,9 +84,9 @@ export class ReportsService {
       if (!productMap.has(prodId)) {
         productMap.set(prodId, {
           productId: prodId,
-          sku: usage.product.sku,
-          name: usage.product.name,
-          unit: usage.product.unit,
+          sku: usage.sku,
+          name: usage.name,
+          unit: usage.unit,
           totalQuantity: 0,
           technicians: new Map(),
         })
@@ -97,7 +98,7 @@ export class ReportsService {
       if (!prodData.technicians.has(usage.technicianId)) {
         prodData.technicians.set(usage.technicianId, {
           technicianId: usage.technicianId,
-          technicianName: usage.technician.name,
+          technicianName: usage.technician_name,
           quantity: 0,
         })
       }
@@ -116,18 +117,18 @@ export class ReportsService {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
-    const usages = await this.prisma.productUsage.findMany({
-      where: {
-        usedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        product: true,
-        technician: true,
-      },
-    })
+    const usages = await this.db.query<any>(`
+      SELECT
+        pu.*,
+        p.sku,
+        p.name as product_name,
+        t.name as technician_name,
+        t.category as technician_category
+      FROM ProductUsage pu
+      INNER JOIN Product p ON p.id = pu.productId
+      INNER JOIN Technician t ON t.id = pu.technicianId
+      WHERE pu.usedAt >= ? AND pu.usedAt <= ?
+    `, [startDate, endDate])
 
     const productTotals = new Map()
     const technicianUsage = new Map()
@@ -144,11 +145,11 @@ export class ReportsService {
       if (!technicianUsage.has(key)) {
         technicianUsage.set(key, {
           technicianId: usage.technicianId,
-          technicianName: usage.technician.name,
-          category: usage.technician.category,
+          technicianName: usage.technician_name,
+          category: usage.technician_category,
           productId: usage.productId,
-          sku: usage.product.sku,
-          productName: usage.product.name,
+          sku: usage.sku,
+          productName: usage.product_name,
           quantity: 0,
           percentage: 0,
         })
@@ -191,12 +192,17 @@ export class ReportsService {
   }
 
   async stockSummary() {
-    const movements = await this.prisma.stockMovement.findMany({
-      include: {
-        product: true,
-        technician: true,
-      },
-    })
+    const movements = await this.db.query<any>(`
+      SELECT
+        sm.*,
+        p.sku,
+        p.name,
+        p.unit,
+        t.name as technician_name
+      FROM StockMovement sm
+      INNER JOIN Product p ON p.id = sm.productId
+      LEFT JOIN Technician t ON t.id = sm.technicianId
+    `)
 
     // Estoque do almoxarifado principal
     const mainStock = new Map()
@@ -213,9 +219,9 @@ export class ReportsService {
         if (!mainStock.has(prodId)) {
           mainStock.set(prodId, {
             productId: prodId,
-            sku: movement.product.sku,
-            name: movement.product.name,
-            unit: movement.product.unit,
+            sku: movement.sku,
+            name: movement.name,
+            unit: movement.unit,
             quantity: 0,
           })
         }
@@ -232,11 +238,11 @@ export class ReportsService {
         if (!techStock.has(key)) {
           techStock.set(key, {
             technicianId: movement.technicianId,
-            technicianName: movement.technician?.name || 'N/A',
+            technicianName: movement.technician_name || 'N/A',
             productId: prodId,
-            sku: movement.product.sku,
-            name: movement.product.name,
-            unit: movement.product.unit,
+            sku: movement.sku,
+            name: movement.name,
+            unit: movement.unit,
             quantity: 0,
           })
         }

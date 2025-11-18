@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
-import { Decimal } from '@prisma/client/runtime/library'
+import { DatabaseService } from '../database/database.service'
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: DatabaseService) {}
 
   // Gerar SKU automático
   private async generateSKU(): Promise<string> {
-    const count = await this.prisma.product.count()
-    const nextNumber = count + 1
+    const result = await this.db.queryOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM Product'
+    )
+    const nextNumber = (result?.count || 0) + 1
     return `PROD-${nextNumber.toString().padStart(6, '0')}`
   }
 
@@ -26,64 +27,75 @@ export class ProductsService {
     // Gerar SKU automaticamente se não fornecido
     const sku = dto.sku || (await this.generateSKU())
 
-    const product = await this.prisma.product.create({
-      data: {
+    // Criar produto
+    const result = await this.db.execute(
+      `INSERT INTO Product (sku, name, unit, barCode, minStock, trackSerial, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
         sku,
-        name: dto.name,
-        unit: dto.unit || 'UN',
-        barCode: dto.barCode,
-        minStock: dto.minStock || 0,
-        trackSerial: dto.trackSerial || false,
-      },
-    })
+        dto.name,
+        dto.unit || 'UN',
+        dto.barCode || null,
+        dto.minStock || 0,
+        dto.trackSerial || false,
+      ]
+    )
 
-    // Se tiver quantidade inicial, criar movimento de entrada no almoxarifado principal
+    const productId = result.insertId
+
+    // Se tiver quantidade inicial, criar movimento de entrada
     if (dto.initialQuantity && dto.initialQuantity > 0) {
-      await this.prisma.stockMovement.create({
-        data: {
-          productId: product.id,
-          type: 'IN',
-          quantity: new Decimal(dto.initialQuantity),
-          referenceType: 'ENTRY',
-          referenceId: product.id,
-          occurredAt: new Date(),
-          note: 'Estoque inicial',
-        },
-      })
+      await this.db.execute(
+        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+         VALUES (?, 'IN', ?, 'ENTRY', ?, NOW(), 'Estoque inicial')`,
+        [productId, dto.initialQuantity, productId]
+      )
     }
 
     // Se rastrear serial/MAC e tiver instances, criar registros
     if (dto.trackSerial && dto.instances && dto.instances.length > 0) {
-      await this.prisma.productInstance.createMany({
-        data: dto.instances.map((inst) => ({
-          productId: product.id,
-          serialNumber: inst.serialNumber || null,
-          macAddress: inst.macAddress || null,
-        })),
-      })
+      for (const inst of dto.instances) {
+        await this.db.execute(
+          `INSERT INTO ProductInstance (productId, serialNumber, macAddress, createdAt, updatedAt)
+           VALUES (?, ?, ?, NOW(), NOW())`,
+          [productId, inst.serialNumber || null, inst.macAddress || null]
+        )
+      }
     }
 
-    return product
+    // Buscar e retornar o produto criado
+    return this.getById(productId)
   }
 
   async list() {
-    const products = await this.prisma.product.findMany({
-      include: {
-        _count: {
-          select: { instances: true },
-        },
-      },
-      orderBy: { id: 'desc' }, // Mais recentes primeiro
-    })
+    const products = await this.db.query<{
+      id: number
+      sku: string
+      name: string
+      unit: string
+      barCode: string | null
+      minStock: number
+      trackSerial: boolean
+      createdAt: Date
+      updatedAt: Date
+    }>('SELECT * FROM Product ORDER BY id DESC')
 
     // Calcular estoque atual para cada produto
     const productsWithStock = await Promise.all(
       products.map(async (product) => {
-        // Somar entradas (IN, TRANSFER) e subtrair saídas (OUT)
-        const movements = await this.prisma.stockMovement.findMany({
-          where: { productId: product.id },
-          select: { type: true, quantity: true },
-        })
+        // Contar instâncias
+        const instanceCount = await this.db.queryOne<{ count: number }>(
+          'SELECT COUNT(*) as count FROM ProductInstance WHERE productId = ?',
+          [product.id]
+        )
+
+        // Calcular estoque baseado em movimentações
+        const movements = await this.db.query<{
+          type: string
+          quantity: number
+        }>('SELECT type, quantity FROM StockMovement WHERE productId = ?', [
+          product.id,
+        ])
 
         let currentStock = 0
         movements.forEach((mov) => {
@@ -97,6 +109,9 @@ export class ProductsService {
         return {
           ...product,
           currentStock,
+          _count: {
+            instances: instanceCount?.count || 0,
+          },
         }
       })
     )
@@ -105,45 +120,80 @@ export class ProductsService {
   }
 
   async getById(id: number) {
-    return this.prisma.product.findUnique({
-      where: { id },
-      include: {
-        instances: true,
-      },
-    })
+    const product = await this.db.queryOne<{
+      id: number
+      sku: string
+      name: string
+      unit: string
+      barCode: string | null
+      minStock: number
+      trackSerial: boolean
+      createdAt: Date
+      updatedAt: Date
+    }>('SELECT * FROM Product WHERE id = ?', [id])
+
+    if (!product) return null
+
+    // Buscar instâncias se houver
+    const instances = await this.db.query(
+      'SELECT * FROM ProductInstance WHERE productId = ?',
+      [id]
+    )
+
+    return {
+      ...product,
+      instances,
+    }
   }
 
-  update(id: number, dto: any) {
-    return this.prisma.product.update({ where: { id }, data: dto })
+  async update(id: number, dto: any) {
+    const fields: string[] = []
+    const values: any[] = []
+
+    if (dto.name !== undefined) {
+      fields.push('name = ?')
+      values.push(dto.name)
+    }
+    if (dto.unit !== undefined) {
+      fields.push('unit = ?')
+      values.push(dto.unit)
+    }
+    if (dto.barCode !== undefined) {
+      fields.push('barCode = ?')
+      values.push(dto.barCode)
+    }
+    if (dto.minStock !== undefined) {
+      fields.push('minStock = ?')
+      values.push(dto.minStock)
+    }
+    if (dto.trackSerial !== undefined) {
+      fields.push('trackSerial = ?')
+      values.push(dto.trackSerial)
+    }
+
+    if (fields.length === 0) {
+      return this.getById(id)
+    }
+
+    fields.push('updatedAt = NOW()')
+    values.push(id)
+
+    await this.db.execute(
+      `UPDATE Product SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    )
+
+    return this.getById(id)
   }
 
   async delete(id: number) {
     // Excluir TODAS as dependências do produto
-    // (útil para dados de teste/fictícios)
+    await this.db.execute('DELETE FROM ProductUsage WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM TransferItem WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM StockMovement WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM ProductInstance WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM Product WHERE id = ?', [id])
 
-    // 1. Excluir registros de uso do produto
-    await this.prisma.productUsage.deleteMany({
-      where: { productId: id },
-    })
-
-    // 2. Excluir itens de transferência
-    await this.prisma.transferItem.deleteMany({
-      where: { productId: id },
-    })
-
-    // 3. Excluir movimentações de estoque
-    await this.prisma.stockMovement.deleteMany({
-      where: { productId: id },
-    })
-
-    // 4. Excluir instâncias do produto (serial/MAC)
-    await this.prisma.productInstance.deleteMany({
-      where: { productId: id },
-    })
-
-    // 5. Excluir o produto
-    return this.prisma.product.delete({
-      where: { id },
-    })
+    return { success: true }
   }
 }

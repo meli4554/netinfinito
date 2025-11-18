@@ -9,7 +9,8 @@ import {
   Post,
 } from '@nestjs/common'
 import { WarehousesService } from './warehouses.service'
-import { WarehouseType } from '@prisma/client'
+
+type WarehouseType = 'MAIN' | 'TECHNICIAN'
 
 @Controller('warehouses')
 export class WarehousesController {
