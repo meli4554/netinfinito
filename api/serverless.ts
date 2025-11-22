@@ -6,18 +6,18 @@ import { join } from 'path'
 import serverless from 'serverless-http'
 import session = require('express-session')
 
-let cachedApp: any = null
+let cachedServer: any = null
 
-async function createApp() {
-  if (cachedApp) {
-    return cachedApp
+async function bootstrap() {
+  if (cachedServer) {
+    return cachedServer
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug']
   })
 
-  // Configurar arquivos estáticos (limitado na Vercel, usar CDN para produção)
+  // Configurar arquivos estáticos
   app.useStaticAssets(join(__dirname, '..', 'public'))
 
   // Configuração do express-session
@@ -29,7 +29,7 @@ async function createApp() {
       cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 dias
+        maxAge: 1000 * 60 * 60 * 24 * 7
       }
     })
   )
@@ -43,14 +43,15 @@ async function createApp() {
   await app.init()
 
   const expressApp = app.getHttpAdapter().getInstance()
-  cachedApp = expressApp
+  const handler = serverless(expressApp)
 
-  return expressApp
+  cachedServer = handler
+  return handler
 }
 
-// Handler para Vercel
-export default async (req: any, res: any) => {
-  const app = await createApp()
-  const handler = serverless(app)
+module.exports = async (req: any, res: any) => {
+  const handler = await bootstrap()
   return handler(req, res)
 }
+
+export default module.exports
