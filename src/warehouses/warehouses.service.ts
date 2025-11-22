@@ -142,9 +142,9 @@ export class WarehousesService {
       } : null
     }
 
-    // Para almoxarifado PRINCIPAL: buscar estoque baseado em movimentos (sem filtro de localização)
+    // Para almoxarifado PRINCIPAL: considerar apenas movimentos do estoque principal
     if (warehouse.type === 'MAIN') {
-      // Buscar todos os produtos que têm movimentos
+      // Buscar movimentos do estoque principal (technicianId nulo)
       const movements = await this.db.query<any>(`
         SELECT
           p.id,
@@ -157,6 +157,7 @@ export class WarehousesService {
           sm.quantity
         FROM StockMovement sm
         INNER JOIN Product p ON p.id = sm.productId
+        WHERE sm.technicianId IS NULL
         ORDER BY p.name ASC
       `)
 
@@ -177,9 +178,9 @@ export class WarehousesService {
         }
 
         const product = stockMap.get(mov.id)
-        if (mov.type === 'IN' || mov.type === 'ADJUST') {
+        if (mov.type === 'IN') {
           product.currentStock += Number(mov.quantity)
-        } else if (mov.type === 'OUT' || mov.type === 'TRANSFER') {
+        } else if (mov.type === 'OUT' || mov.type === 'ADJUST') {
           product.currentStock -= Number(mov.quantity)
         }
       })

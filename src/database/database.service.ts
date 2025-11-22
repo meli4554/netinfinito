@@ -6,6 +6,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pool: mysql.Pool
 
   async onModuleInit() {
+    // Configuração SSL para Aiven e outros serviços cloud
+    const sslConfig = process.env.DB_SSL === 'true'
+      ? { rejectUnauthorized: false }
+      : undefined
+
     // Criar pool de conexões
     this.pool = mysql.createPool({
       host: process.env.DB_HOST || 'localhost',
@@ -13,6 +18,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'netinfi',
+      ssl: sslConfig,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
@@ -20,7 +26,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       keepAliveInitialDelay: 0
     })
 
-    console.log('✓ Conectado ao MySQL')
+    console.log('✓ Conectado ao MySQL:', process.env.DB_HOST)
   }
 
   async onModuleDestroy() {

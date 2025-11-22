@@ -84,6 +84,49 @@ export class ProductInstancesService {
     }));
   }
 
+  async findOne(id: number) {
+    const instance = await this.db.queryOne<any>(`
+      SELECT
+        pi.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit
+      FROM ProductInstance pi
+      INNER JOIN Product p ON p.id = pi.productId
+      WHERE pi.id = ?
+    `, [id]);
+
+    if (!instance) return null;
+
+    return {
+      id: instance.id,
+      productId: instance.productId,
+      serialNumber: instance.serialNumber,
+      macAddress: instance.macAddress,
+      status: instance.status,
+      invoiceNumber: instance.invoiceNumber,
+      invoiceDate: instance.invoiceDate,
+      invoiceFile: instance.invoiceFile,
+      receivedAt: instance.receivedAt,
+      supplier: instance.supplier,
+      entryDate: instance.entryDate,
+      note: instance.note,
+      inutilizedReason: instance.inutilizedReason,
+      inutilizedAt: instance.inutilizedAt,
+      awaitingReplacement: instance.awaitingReplacement,
+      replacementRequested: instance.replacementRequested,
+      createdAt: instance.createdAt,
+      updatedAt: instance.updatedAt,
+      product: {
+        id: instance.product_id,
+        sku: instance.product_sku,
+        name: instance.product_name,
+        unit: instance.product_unit
+      }
+    };
+  }
+
   async findBySerial(serialNumber: string) {
     const instance = await this.db.queryOne<any>(`
       SELECT

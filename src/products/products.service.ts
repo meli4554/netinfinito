@@ -89,19 +89,20 @@ export class ProductsService {
           [product.id]
         )
 
-        // Calcular estoque baseado em movimentações
+        // Calcular estoque baseado em movimentações do almoxarifado principal
+        // (excluindo movimentos de técnicos)
         const movements = await this.db.query<{
           type: string
           quantity: number
-        }>('SELECT type, quantity FROM StockMovement WHERE productId = ?', [
+        }>('SELECT type, quantity FROM StockMovement WHERE productId = ? AND technicianId IS NULL', [
           product.id,
         ])
 
         let currentStock = 0
         movements.forEach((mov) => {
-          if (mov.type === 'IN' || mov.type === 'TRANSFER') {
+          if (mov.type === 'IN') {
             currentStock += Number(mov.quantity)
-          } else if (mov.type === 'OUT') {
+          } else if (mov.type === 'OUT' || mov.type === 'ADJUST') {
             currentStock -= Number(mov.quantity)
           }
         })
@@ -134,9 +135,19 @@ export class ProductsService {
 
     if (!product) return null
 
-    // Buscar instâncias se houver
+    // Buscar instâncias se houver (ordenar: disponíveis primeiro)
     const instances = await this.db.query(
-      'SELECT * FROM ProductInstance WHERE productId = ?',
+      `SELECT * FROM ProductInstance
+       WHERE productId = ?
+       ORDER BY
+         CASE status
+           WHEN 'AVAILABLE' THEN 1
+           WHEN 'IN_USE' THEN 2
+           WHEN 'MAINTENANCE' THEN 3
+           WHEN 'DEFECTIVE' THEN 4
+           ELSE 5
+         END,
+         createdAt DESC`,
       [id]
     )
 

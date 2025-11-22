@@ -36,6 +36,11 @@ export class ProductInstancesController {
     return this.instancesService.findBySerial(serialNumber);
   }
 
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.instancesService.findOne(id);
+  }
+
   @Get('search/mac')
   findByMac(@Query('mac') macAddress: string) {
     return this.instancesService.findByMac(macAddress);

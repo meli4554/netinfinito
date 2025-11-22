@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only api/index.ts",
     "build": "tsc",
-    "start": "node dist/api/index.js"
+    "start": "node dist/api/index.js",
+    "vercel-build": "echo 'Build completed. Vercel will handle TypeScript compilation.'"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

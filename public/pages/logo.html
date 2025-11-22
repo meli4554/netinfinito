@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RCONTROL - Logo Design</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated Background */
+    .bg-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .bg-animation span {
+      position: absolute;
+      display: block;
+      width: 20px;
+      height: 20px;
+      background: rgba(59, 130, 246, 0.1);
+      animation: float 25s infinite;
+      border-radius: 50%;
+    }
+
+    .bg-animation span:nth-child(1) { left: 25%; animation-delay: 0s; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; animation-delay: 2s; width: 20px; height: 20px; }
+    .bg-animation span:nth-child(3) { left: 70%; animation-delay: 4s; width: 50px; height: 50px; }
+    .bg-animation span:nth-child(4) { left: 40%; animation-delay: 0s; width: 60px; height: 60px; }
+    .bg-animation span:nth-child(5) { left: 65%; animation-delay: 3s; width: 30px; height: 30px; }
+    .bg-animation span:nth-child(6) { left: 75%; animation-delay: 7s; width: 110px; height: 110px; }
+    .bg-animation span:nth-child(7) { left: 35%; animation-delay: 5s; width: 40px; height: 40px; }
+    .bg-animation span:nth-child(8) { left: 50%; animation-delay: 9s; width: 25px; height: 25px; }
+
+    @keyframes float {
+      0% {
+        bottom: -150px;
+        transform: translateX(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        bottom: 100%;
+        transform: translateX(100px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .logo-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 60px;
+    }
+
+    /* Main Logo Container */
+    .logo-main {
+      position: relative;
+      animation: fadeInScale 1s ease-out;
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Logo Circle with Gradient and Glow */
+    .logo-circle {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 25px 50px rgba(37, 99, 235, 0.4),
+        0 0 100px rgba(59, 130, 246, 0.3),
+        inset 0 0 40px rgba(255, 255, 255, 0.1);
+      animation: pulse 3s ease-in-out infinite;
+      transition: all 0.3s ease;
+    }
+
+    .logo-circle:hover {
+      transform: scale(1.05) rotate(5deg);
+      box-shadow:
+        0 30px 60px rgba(37, 99, 235, 0.5),
+        0 0 120px rgba(59, 130, 246, 0.4),
+        inset 0 0 40px rgba(255, 255, 255, 0.15);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow:
+          0 25px 50px rgba(37, 99, 235, 0.4),
+          0 0 100px rgba(59, 130, 246, 0.3),
+          inset 0 0 40px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        box-shadow:
+          0 30px 60px rgba(37, 99, 235, 0.5),
+          0 0 140px rgba(59, 130, 246, 0.5),
+          inset 0 0 50px rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    /* The R Letter */
+    .logo-letter {
+      font-size: 120px;
+      font-weight: 900;
+      color: white;
+      text-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(255, 255, 255, 0.3);
+      font-family: 'Arial Black', sans-serif;
+      letter-spacing: -5px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Shine Effect */
+    .logo-circle::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 70%
+      );
+      transform: rotate(45deg);
+      animation: shine 4s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    /* Brand Name */
+    .brand-name {
+      font-size: 72px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: fadeInUp 1s ease-out 0.3s both;
+      position: relative;
+    }
+
+    .brand-name::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+      border-radius: 2px;
+      animation: expandWidth 1s ease-out 0.8s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes expandWidth {
+      from { width: 0; }
+      to { width: 120px; }
+    }
+
+    /* Tagline */
+    .tagline {
+      font-size: 18px;
+      color: #94a3b8;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 30px;
+      animation: fadeInUp 1s ease-out 0.6s both;
+    }
+
+    /* Variations Section */
+    .logo-variations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 40px;
+      margin-top: 80px;
+      max-width: 1200px;
+      animation: fadeInUp 1s ease-out 0.9s both;
+    }
+
+    .variation {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      padding: 30px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .variation:hover {
+      transform: translateY(-5px);
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+    }
+
+    .variation-title {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    /* Small Logo Variations */
+    .logo-small {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .logo-small:hover {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .logo-small .logo-letter {
+      font-size: 50px;
+    }
+
+    /* Dark Variation */
+    .logo-dark {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #3b82f6;
+    }
+
+    /* Light Variation */
+    .logo-light {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    }
+
+    .logo-light .logo-letter {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Minimal Variation */
+    .logo-minimal {
+      background: transparent;
+      border: 3px solid #3b82f6;
+    }
+
+    .logo-minimal .logo-letter {
+      color: #3b82f6;
+    }
+
+    /* Info Text */
+    .info {
+      margin-top: 60px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.8;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      animation: fadeInUp 1s ease-out 1.2s both;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .logo-circle {
+        width: 140px;
+        height: 140px;
+      }
+
+      .logo-letter {
+        font-size: 90px;
+      }
+
+      .brand-name {
+        font-size: 48px;
+      }
+
+      .tagline {
+        font-size: 14px;
+      }
+
+      .logo-variations {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="container">
+    <div class="logo-showcase">
+      <!-- Main Logo -->
+      <div class="logo-main">
+        <div class="logo-circle">
+          <div class="logo-letter">R</div>
+        </div>
+      </div>
+
+      <!-- Brand Name -->
+      <div>
+        <h1 class="brand-name">RCONTROL</h1>
+        <p class="tagline">Controle Inteligente</p>
+      </div>
+
+      <!-- Logo Variations -->
+      <div class="logo-variations">
+        <div class="variation">
+          <div class="variation-title">Principal</div>
+          <div class="logo-small">
+            <div class="logo-letter">R</div>
+          </div>
+        </div>
+
+        <div class="variation">
+          <div class="variation-title">Versão Escura</div>
+          <div class="logo-small logo-dark">
+            <div class="logo-letter">R</div>
+          </div>
+        </div>
+
+        <div class="variation">
+          <div class="variation-title">Versão Clara</div>
+          <div class="logo-small logo-light">
+            <div class="logo-letter">R</div>
+          </div>
+        </div>
+
+        <div class="variation">
+          <div class="variation-title">Versão Minimal</div>
+          <div class="logo-small logo-minimal">
+            <div class="logo-letter">R</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="info">
+        <p>
+          <strong>RCONTROL</strong> - Sistema de Gestão de Almoxarifado<br>
+          Um sistema moderno e elegante para controle total do seu estoque.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

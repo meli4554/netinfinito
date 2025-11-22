@@ -34,3 +34,18 @@ logs/
 nul
 tmp/
 temp/
+
+# Test files
+test-*.js
+import-sql-to-aiven.js
+
+# Database files
+*.sql
+ca.pem
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Vercel
+.vercel

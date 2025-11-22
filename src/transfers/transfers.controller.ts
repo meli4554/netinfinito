@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -67,6 +68,11 @@ export class TransfersController {
     return this.transfersService.markAsTransferred(id)
   }
 
+  @Patch(':id/revert')
+  revertTransfer(@Param('id', ParseIntPipe) id: number) {
+    return this.transfersService.revertTransfer(id)
+  }
+
   @Patch(':id/items/:itemId/use')
   markItemAsUsed(
     @Param('id', ParseIntPipe) id: number,
@@ -110,5 +116,10 @@ export class TransfersController {
   @Get('technician/:technicianId')
   getByTechnician(@Param('technicianId', ParseIntPipe) technicianId: number) {
     return this.transfersService.getByTechnician(technicianId)
+  }
+
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.transfersService.delete(id)
   }
 }

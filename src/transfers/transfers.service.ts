@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common'
+﻿import { Injectable } from '@nestjs/common'
 import { DatabaseService } from '../database/database.service'
 
-type TransferStatus = 'PENDING' | 'TRANSFERRED' | 'IN_HANDS' | 'PARTIALLY_USED' | 'PARTIALLY_RETURNED' | 'USED' | 'RETURNED' | 'RECEIVED'
+type TransferStatus = 'PENDING' | 'IN_HANDS' | 'PARTIALLY_USED' | 'USED' | 'PARTIALLY_RETURNED' | 'RETURNED' | 'CANCELED'
 
 @Injectable()
 export class TransfersService {
@@ -110,6 +110,7 @@ export class TransfersService {
           note: transfer.note,
           transferredAt: transfer.transferredAt,
           receivedAt: transfer.receivedAt,
+          canceledAt: transfer.canceledAt,
           signatureType: transfer.signatureType,
           signatureFile: transfer.signatureFile,
           createdAt: transfer.createdAt,
@@ -210,6 +211,7 @@ export class TransfersService {
       note: transfer.note,
       transferredAt: transfer.transferredAt,
       receivedAt: transfer.receivedAt,
+      canceledAt: transfer.canceledAt,
       signatureType: transfer.signatureType,
       signatureFile: transfer.signatureFile,
       createdAt: transfer.createdAt,
@@ -258,71 +260,16 @@ export class TransfersService {
   }
 
   async setStatus(id: number, status: TransferStatus) {
-    const now = new Date()
-    const updates: string[] = ['status = ?']
-    const values: any[] = [status]
-
-    if (status === 'TRANSFERRED') {
-      updates.push('transferredAt = ?')
-      values.push(now)
-    }
-    if (status === 'RECEIVED') {
-      updates.push('receivedAt = ?')
-      values.push(now)
-    }
-
-    values.push(id)
-
-    await this.db.execute(
-      `UPDATE Transfer SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    )
-
-    // Buscar items da transferência
-    const items = await this.db.query<any>(
-      'SELECT * FROM TransferItem WHERE transferId = ?',
-      [id]
-    )
-
-    // Se o status for TRANSFERRED, criar movimentos de estoque
-    if (status === 'TRANSFERRED') {
-      const transfer = await this.db.queryOne<any>(
-        'SELECT * FROM Transfer WHERE id = ?',
-        [id]
+    if (status === 'CANCELED') {
+      await this.db.execute(
+        'UPDATE Transfer SET status = ?, canceledAt = ? WHERE id = ?',
+        [status, new Date(), id]
       )
-
-      for (const item of items) {
-        // Saída do almoxarifado de origem
-        await this.db.execute(
-          `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            item.productId,
-            'OUT',
-            item.quantity,
-            'TRANSFER',
-            id,
-            now,
-            `Transferência ${transfer.number} para técnico`
-          ]
-        )
-
-        // Entrada no almoxarifado do técnico
-        await this.db.execute(
-          `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            item.productId,
-            'TRANSFER',
-            item.quantity,
-            transfer.technicianId,
-            'TRANSFER',
-            id,
-            now,
-            `Transferência ${transfer.number} recebida`
-          ]
-        )
-      }
+    } else {
+      await this.db.execute(
+        'UPDATE Transfer SET status = ? WHERE id = ?',
+        [status, id]
+      )
     }
 
     return this.findOne(id)
@@ -373,6 +320,7 @@ export class TransfersService {
           note: transfer.note,
           transferredAt: transfer.transferredAt,
           receivedAt: transfer.receivedAt,
+          canceledAt: transfer.canceledAt,
           createdAt: transfer.createdAt,
           updatedAt: transfer.updatedAt,
           fromWarehouse: transfer.fromWarehouse_id ? {
@@ -462,6 +410,7 @@ export class TransfersService {
           note: transfer.note,
           transferredAt: transfer.transferredAt,
           receivedAt: transfer.receivedAt,
+          canceledAt: transfer.canceledAt,
           createdAt: transfer.createdAt,
           updatedAt: transfer.updatedAt,
           fromWarehouse: transfer.fromWarehouse_id ? {
@@ -545,14 +494,153 @@ export class TransfersService {
   }
 
   async markAsTransferred(id: number) {
+    const now = new Date()
+
+    // Atualizar status da transferência
     await this.db.execute(
       'UPDATE Transfer SET status = ?, transferredAt = ? WHERE id = ?',
-      ['IN_HANDS', new Date(), id]
+      ['IN_HANDS', now, id]
     )
 
+    // Atualizar status dos itens
     await this.db.execute(
       'UPDATE TransferItem SET status = ? WHERE transferId = ?',
       ['IN_HANDS', id]
+    )
+
+    // Buscar transferência e itens
+    const transfer = await this.db.queryOne<any>(
+      'SELECT * FROM Transfer WHERE id = ?',
+      [id]
+    )
+
+    const items = await this.db.query<any>(
+      'SELECT * FROM TransferItem WHERE transferId = ?',
+      [id]
+    )
+
+    // Criar movimentos de estoque para cada item
+    for (const item of items) {
+      // Saída do almoxarifado principal (locationId = NULL para warehouse principal)
+      await this.db.execute(
+        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.productId,
+          'OUT',
+          item.quantity,
+          'TRANSFER',
+          id,
+          now,
+          `Saída para transferência ${transfer.number} - Técnico`
+        ]
+      )
+
+      // Entrada no almoxarifado do técnico (technicianId preenchido)
+      await this.db.execute(
+        `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.productId,
+          'TRANSFER',
+          item.quantity,
+          transfer.technicianId,
+          'TRANSFER',
+          id,
+          now,
+          `Entrada de transferência ${transfer.number}`
+        ]
+      )
+
+      // Se o item tem productInstanceId, atualizar o status da instância
+      if (item.productInstanceId) {
+        await this.db.execute(
+          'UPDATE ProductInstance SET status = ? WHERE id = ?',
+          ['IN_USE', item.productInstanceId]
+        )
+      }
+    }
+
+    return this.findOne(id)
+  }
+
+  async revertTransfer(id: number) {
+    const now = new Date()
+
+    // Buscar transferência atual
+    const transfer = await this.db.queryOne<any>(
+      'SELECT * FROM Transfer WHERE id = ?',
+      [id]
+    )
+
+    if (!transfer) {
+      throw new Error('Transferência não encontrada')
+    }
+
+    // Só pode reverter se NÃO estiver em PENDING ou RETURNED
+    const canRevert = ['IN_HANDS', 'PARTIALLY_USED', 'USED', 'PARTIALLY_RETURNED'].includes(transfer.status)
+    if (!canRevert) {
+      throw new Error('Não é possível reverter esta transferência no status atual')
+    }
+
+    // Buscar itens da transferência
+    const items = await this.db.query<any>(
+      'SELECT * FROM TransferItem WHERE transferId = ?',
+      [id]
+    )
+
+    // Reverter movimentos de estoque para cada item
+    for (const item of items) {
+      // Saída do técnico (technicianId preenchido)
+      await this.db.execute(
+        `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.productId,
+          'OUT',
+          item.quantity,
+          transfer.technicianId,
+          'ADJUSTMENT',
+          id,
+          now,
+          `[REVERSÃO] Transferência ${transfer.number} - Retirado do técnico`
+        ]
+      )
+
+      // Entrada de volta no almoxarifado principal (locationId = NULL)
+      await this.db.execute(
+        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.productId,
+          'IN',
+          item.quantity,
+          'ADJUSTMENT',
+          id,
+          now,
+          `[REVERSÃO] Transferência ${transfer.number} - Produto devolvido ao estoque`
+        ]
+      )
+
+      // Se o item tem productInstanceId, reverter o status da instância
+      if (item.productInstanceId) {
+        await this.db.execute(
+          'UPDATE ProductInstance SET status = ? WHERE id = ?',
+          ['AVAILABLE', item.productInstanceId]
+        )
+      }
+    }
+
+    // Atualizar status da transferência para PENDING
+    await this.db.execute(
+      'UPDATE Transfer SET status = ?, transferredAt = NULL WHERE id = ?',
+      ['PENDING', id]
+    )
+
+    // Atualizar status dos itens para PENDING e limpar dados de uso
+    await this.db.execute(
+      'UPDATE TransferItem SET status = ?, usedAt = NULL, returnedAt = NULL, ixcClientCode = NULL, usageNote = NULL WHERE transferId = ?',
+      ['PENDING', id]
     )
 
     return this.findOne(id)
@@ -562,20 +650,61 @@ export class TransfersService {
     itemId: number,
     data: { ixcClientCode?: string; usageNote?: string },
   ) {
-    await this.db.execute(
-      'UPDATE TransferItem SET status = ?, usedAt = ?, ixcClientCode = ?, usageNote = ? WHERE id = ?',
-      ['USED', new Date(), data.ixcClientCode || null, data.usageNote || null, itemId]
+    // Buscar item com dados da transferência para identificar técnico
+    const item = await this.db.queryOne<any>(
+      `SELECT ti.*, tr.technicianId, tr.number as transfer_number
+       FROM TransferItem ti
+       INNER JOIN Transfer tr ON tr.id = ti.transferId
+       WHERE ti.id = ?`,
+      [itemId]
     )
 
-    const item = await this.db.queryOne<any>(
-      'SELECT * FROM TransferItem WHERE id = ?',
-      [itemId]
+    if (!item) {
+      throw new Error('Item da transferência não encontrado')
+    }
+
+    const usageNote = data.usageNote || null
+    const serviceOrder = data.ixcClientCode || null
+
+    // Registrar uso (ProductUsage)
+    const usageResult = await this.db.execute(
+      `INSERT INTO ProductUsage (technicianId, productId, quantity, note, serviceOrder, clientName, usedAt)
+       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        item.technicianId,
+        item.productId,
+        item.quantity,
+        usageNote,
+        serviceOrder,
+        null
+      ]
+    )
+
+    const usageId = usageResult.insertId
+
+    // Registrar saída do estoque do técnico
+    await this.db.execute(
+      `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+       VALUES (?, 'OUT', ?, ?, 'USAGE', ?, NOW(), ?)`,
+      [
+        item.productId,
+        item.quantity,
+        item.technicianId,
+        usageId,
+        usageNote || `Uso registrado - transferência ${item.transfer_number || ''}`.trim()
+      ]
+    )
+
+    // Atualizar item como usado
+    await this.db.execute(
+      'UPDATE TransferItem SET status = ?, usedAt = ?, ixcClientCode = ?, usageNote = ? WHERE id = ?',
+      ['USED', new Date(), serviceOrder, usageNote, itemId]
     )
 
     // Atualizar status da transferência
     await this.updateTransferStatus(item.transferId)
 
-    return item
+    return this.db.queryOne<any>('SELECT * FROM TransferItem WHERE id = ?', [itemId])
   }
 
   async markItemAsReturned(itemId: number) {
@@ -657,4 +786,35 @@ export class TransfersService {
       reportUrl: `/reports/transfer-${id}.pdf`,
     }
   }
+
+  async delete(id: number) {
+    // Verificar se a transferência existe e está cancelada
+    const transfer = await this.db.queryOne<any>(
+      'SELECT * FROM Transfer WHERE id = ?',
+      [id]
+    )
+
+    if (!transfer) {
+      throw new Error('Transferência não encontrada')
+    }
+
+    if (transfer.status !== 'CANCELED') {
+      throw new Error('Apenas transferências canceladas podem ser apagadas')
+    }
+
+    // Deletar movimentos de estoque relacionados à transferência
+    await this.db.execute(
+      'DELETE FROM StockMovement WHERE referenceType = ? AND referenceId = ?',
+      ['TRANSFER', id]
+    )
+
+    // Deletar transferência (os itens serão deletados em cascata)
+    await this.db.execute(
+      'DELETE FROM Transfer WHERE id = ?',
+      [id]
+    )
+
+    return { success: true, message: 'Transferência apagada com sucesso' }
+  }
 }
+

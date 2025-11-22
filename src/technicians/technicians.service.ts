@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { DatabaseService } from '../database/database.service'
 
 // Define o enum localmente
-type TechnicianCategory = 'FIBER' | 'RADIO' | 'SUPPORT' | 'OTHER'
+type TechnicianCategory = 'FIBRA' | 'RADIO' | 'INSTALACAO' | 'MANUTENCAO' | 'OUTROS'
 
 interface Technician {
   id: number
@@ -103,30 +103,38 @@ export class TechniciansService {
         w.createdAt as warehouse_createdAt
       FROM Technician t
       LEFT JOIN Warehouse w ON w.technicianId = t.id
+      WHERE t.isActive = 1
       ORDER BY t.name ASC
     `
 
     const rows = await this.db.query<any>(sql)
 
-    // Transformar para estrutura esperada
-    return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      category: row.category,
-      phone: row.phone,
-      email: row.email,
-      isActive: row.isActive,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      warehouse: row.warehouse_id ? {
-        id: row.warehouse_id,
-        name: row.warehouse_name,
-        code: row.warehouse_code,
-        type: row.warehouse_type,
-        technicianId: row.id,
-        createdAt: row.warehouse_createdAt
-      } : null
-    }))
+    // Remover duplicados (quando técnico tem warehouse)
+    const unique = new Map()
+    rows.forEach(row => {
+      if (!unique.has(row.id)) {
+        unique.set(row.id, {
+          id: row.id,
+          name: row.name,
+          category: row.category,
+          phone: row.phone,
+          email: row.email,
+          isActive: Boolean(row.isActive),
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          warehouse: row.warehouse_id ? {
+            id: row.warehouse_id,
+            name: row.warehouse_name,
+            code: row.warehouse_code,
+            type: row.warehouse_type,
+            technicianId: row.id,
+            createdAt: row.warehouse_createdAt
+          } : null
+        })
+      }
+    })
+
+    return Array.from(unique.values())
   }
 
   async findOne(id: number) {
