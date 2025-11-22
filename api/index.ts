@@ -3,16 +3,22 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from '../src/app.module'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
+import serverless from 'serverless-http'
 import session = require('express-session')
 
+let cachedServer: any = null
+
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  if (cachedServer) {
+    return cachedServer
+  }
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug']
+  })
 
   // Configurar arquivos estáticos
   app.useStaticAssets(join(__dirname, '..', 'public'))
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  })
 
   // Configuração do express-session
   app.use(
@@ -23,37 +29,29 @@ async function bootstrap() {
       cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 dias
+        maxAge: 1000 * 60 * 60 * 24 * 7
       }
     })
   )
 
   // Configuração do CORS
   app.enableCors({
-    origin: true,
+    origin: process.env.CORS_ORIGIN || true,
     credentials: true
   })
 
-  const port = process.env.PORT || 3000
-  await app.listen(port)
+  await app.init()
 
-  console.log('='.repeat(60))
-  console.log('🚀 Servidor NetInFi iniciado com sucesso!')
-  console.log('='.repeat(60))
-  console.log(`📍 URL: http://localhost:${port}`)
-  console.log('📚 Documentação: http://localhost:${port}/api')
-  console.log('='.repeat(60))
-  console.log('\n💡 Endpoints disponíveis:')
-  console.log('   POST   /auth/login')
-  console.log('   POST   /auth/logout')
-  console.log('   GET    /auth/me')
-  console.log('\n📋 Credenciais padrão:')
-  console.log('   Email: admin@netinfi.com')
-  console.log('   Senha: Admin123!')
-  console.log('='.repeat(60))
+  const expressApp = app.getHttpAdapter().getInstance()
+  const handler = serverless(expressApp)
+
+  cachedServer = handler
+  return handler
 }
 
-bootstrap().catch((error) => {
-  console.error('❌ Erro ao iniciar o servidor:', error)
-  process.exit(1)
-})
+module.exports = async (req: any, res: any) => {
+  const handler = await bootstrap()
+  return handler(req, res)
+}
+
+export default module.exports
