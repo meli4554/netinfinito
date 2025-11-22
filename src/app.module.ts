@@ -11,7 +11,6 @@ import { TransfersModule } from './transfers/transfers.module'
 import { ProductUsageModule } from './product-usage/product-usage.module'
 import { ReportsModule } from './reports/reports.module'
 import { StockMovementsModule } from './stock-movements/stock-movements.module'
-import { UploadModule } from './upload/upload.module'
 import { AccountingModule } from './accounting/accounting.module'
 
 @Module({
@@ -28,7 +27,6 @@ import { AccountingModule } from './accounting/accounting.module'
     ProductUsageModule,
     ReportsModule,
     StockMovementsModule,
-    UploadModule,
     AccountingModule,
   ],
 })
