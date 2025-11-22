@@ -4,7 +4,6 @@ import { AppModule } from '../src/app.module'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
 import serverless from 'serverless-http'
-import session = require('express-session')
 import { AllExceptionsFilter } from '../src/filters/http-exception.filter'
 
 let cachedServer: any = null
@@ -21,20 +20,6 @@ async function bootstrap() {
 
   // Configurar arquivos estáticos
   app.useStaticAssets(join(__dirname, '..', 'public'))
-
-  // Configuração do express-session
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'netinfi-secret-change-me',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7
-      }
-    })
-  )
 
   // Configuração do CORS
   app.enableCors({
