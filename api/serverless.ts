@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
 import serverless from 'serverless-http'
 import session = require('express-session')
+import { AllExceptionsFilter } from '../src/filters/http-exception.filter'
 
 let cachedServer: any = null
 
@@ -14,7 +15,8 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug']
+    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug'],
+    bodyParser: true
   })
 
   // Configurar arquivos estáticos
@@ -39,6 +41,9 @@ async function bootstrap() {
     origin: process.env.CORS_ORIGIN || true,
     credentials: true
   })
+
+  // Filtro global de exceções
+  app.useGlobalFilters(new AllExceptionsFilter())
 
   await app.init()
 
