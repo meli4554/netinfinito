@@ -15,14 +15,26 @@ export class AuthController {
   @Post('login')
   @Public()
   async login(@Body() dto: LoginDto, @Req() req: Request) {
+    console.log('🔐 Tentativa de login:', dto.email)
     const user = await this.auth.login(dto.email, dto.password)
+    console.log('✅ Login bem-sucedido:', user.email)
 
-    // Armazena os dados do usuário na sessão
-    req.session.user = user
+    // Em ambiente serverless, sessões podem não funcionar corretamente
+    // Retorna token simples para o frontend gerenciar
+    try {
+      if (req.session) {
+        req.session.user = user
+        console.log('📝 Sessão criada')
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao criar sessão:', error.message)
+    }
 
     return {
       message: 'Login realizado com sucesso',
-      user
+      user,
+      // Token básico (em produção, usar JWT)
+      token: Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64')
     }
   }
 
