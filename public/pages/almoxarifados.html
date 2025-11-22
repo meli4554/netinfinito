@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Almoxarifados - NetInFi</title>
+  <title>Almoxarifados - RCONTROL</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .warehouses-grid {
@@ -310,16 +310,23 @@
     <div class="container">
       <div class="header-content">
         <a href="/pages/dashboard.html" class="logo">
-          <div class="logo-icon">NI</div>
-          <span>NetInFi</span>
+          <div class="logo-icon">R</div>
+          <span>CONTROL</span>
         </a>
-        <nav class="nav">
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="nav" id="navMenu">
           <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
           <a href="/pages/products.html" class="nav-link">Produtos</a>
           <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
           <a href="/pages/almoxarifados.html" class="nav-link active">Almoxarifados</a>
           <a href="/pages/transfers.html" class="nav-link">Saída</a>
-          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="/pages/contabilizacao.html" class="nav-link">Contabilização</a>
           <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
         </nav>
       </div>
@@ -401,6 +408,7 @@
     </div>
   </div>
 
+  <script src="/js/menu.js"></script>
   <script src="/js/auth.js"></script>
   <script>
     let data = [];
@@ -583,16 +591,16 @@
 
       // Informações do almoxarifado
       html += `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+        <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <h3 style="margin: 0 0 8px 0; font-size: 24px;">${warehouse.name}</h3>
-              <p style="margin: 0; opacity: 0.9;"><strong>Código:</strong> ${warehouse.code} | <strong>Tipo:</strong> ${TYPE_LABELS[warehouse.type]}</p>
-              ${warehouse.technician ? `<p style="margin: 5px 0 0 0; opacity: 0.9;">👤 ${warehouse.technician.name}</p>` : ''}
+              <p style="margin: 0; opacity: 0.7;"><strong>Código:</strong> ${warehouse.code} | <strong>Tipo:</strong> ${TYPE_LABELS[warehouse.type]}</p>
+              ${warehouse.technician ? `<p style="margin: 5px 0 0 0; opacity: 0.7;">👤 ${warehouse.technician.name}</p>` : ''}
             </div>
-            <div style="text-align: center; background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 12px;">
-              <div style="font-size: 32px; font-weight: 700;">${products.length}</div>
-              <div style="font-size: 13px; opacity: 0.9; margin-top: 4px;">Produtos</div>
+            <div style="text-align: center; background: rgba(16, 185, 129, 0.15); padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <div style="font-size: 32px; font-weight: 700; color: #10b981;">${products.length}</div>
+              <div style="font-size: 13px; opacity: 0.9; margin-top: 4px; color: #10b981;">Produtos</div>
             </div>
           </div>
         </div>
@@ -663,25 +671,169 @@
         transfers.forEach(t => {
           const inHandsItems = t.items.filter(i => i.status === 'IN_HANDS' || i.status === 'PENDING');
           if (inHandsItems.length > 0) {
+            const transferDate = new Date(t.transferredAt || t.createdAt).toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
             html += `
-              <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+              <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                  <h5 style="margin: 0; font-size: 16px;">📦 ${t.number}</h5>
-                  <span style="background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                  <div>
+                    <h5 style="margin: 0; font-size: 17px; font-weight: 700;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
+                      </svg>
+                      ${t.number}
+                    </h5>
+                    <div style="font-size: 12px; opacity: 0.7; margin-top: 6px; font-weight: 500;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      ${transferDate}
+                    </div>
+                  </div>
+                  <span style="background: rgba(16, 185, 129, 0.15); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
                     ${inHandsItems.length} ${inHandsItems.length === 1 ? 'item' : 'itens'}
                   </span>
                 </div>
-                <div style="display: grid; gap: 10px;">
-                  ${inHandsItems.map(item => `
-                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; backdrop-filter: blur(10px);">
-                      <div style="font-weight: 600; margin-bottom: 4px;">${item.product.name}</div>
-                      <div style="font-size: 13px; opacity: 0.9;">
-                        Quantidade: <strong>${item.quantity} ${item.product.unit}</strong>
-                        ${item.serialNumber ? `<br>SN: ${item.serialNumber}` : ''}
-                        ${item.macAddress ? `<br>MAC: ${item.macAddress}` : ''}
+                <div style="display: grid; gap: 12px;">
+                  ${inHandsItems.map((item, idx) => {
+                    const statusBadgeColor = item.status === 'IN_HANDS' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)';
+                    const statusBadgeBorder = item.status === 'IN_HANDS' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)';
+                    const statusTextColor = item.status === 'IN_HANDS' ? '#10b981' : '#f59e0b';
+                    const statusText = item.status === 'IN_HANDS' ? 'EM MÃOS' : 'PENDENTE';
+                    const itemId = `transfer-item-${t.id}-${idx}`;
+
+                    return `
+                    <div style="background: rgba(0,0,0,0.3); padding: 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                      <!-- Cabeçalho do Item -->
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 14px;">
+                        <div style="flex: 1;">
+                          <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">${item.product.name}</div>
+                          <div style="font-family: 'Courier New', monospace; font-size: 11px; opacity: 0.7; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.1);">SKU: ${item.product.sku}</div>
+                          <div style="font-size: 14px; font-weight: 600; margin-top: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                            </svg>
+                            Quantidade: <strong style="font-size: 15px;">${item.quantity} ${item.product.unit}</strong>
+                          </div>
+                        </div>
+                        <span style="background: ${statusBadgeColor}; border: 1px solid ${statusBadgeBorder}; color: ${statusTextColor}; padding: 6px 12px; border-radius: 14px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                          ${statusText}
+                        </span>
+                      </div>
+
+                      <!-- Botão Ver Detalhes -->
+                      <button
+                        onclick="toggleItemDetails('${itemId}')"
+                        style="width: 100%; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; color: #10b981; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"
+                        onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'"
+                        onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.2)'"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        <span id="${itemId}-btn-text">Ver Detalhes</span>
+                      </button>
+
+                      <!-- Detalhes em Grid (inicialmente oculto) -->
+                      <div id="${itemId}" style="display: none; margin-top: 14px; animation: fadeIn 0.3s ease;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+                          <div style="display: grid; gap: 12px;">
+                            ${item.serialNumber ? `
+                            <!-- Serial Number -->
+                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #10b981;">
+                              <div style="background: rgba(16, 185, 129, 0.15); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                                </svg>
+                              </div>
+                              <div style="flex: 1;">
+                                <div style="font-size: 10px; opacity: 0.8; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.5px;">NÚMERO DE SÉRIE</div>
+                                <div style="font-size: 14px; font-weight: 700; font-family: 'Courier New', monospace; color: #10b981;">${item.serialNumber}</div>
+                              </div>
+                            </div>
+                            ` : ''}
+
+                            ${item.macAddress ? `
+                            <!-- MAC Address -->
+                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #3b82f6;">
+                              <div style="background: rgba(59, 130, 246, 0.15); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                              </div>
+                              <div style="flex: 1;">
+                                <div style="font-size: 10px; opacity: 0.8; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.5px;">ENDEREÇO MAC</div>
+                                <div style="font-size: 14px; font-weight: 700; font-family: 'Courier New', monospace; color: #3b82f6;">${item.macAddress}</div>
+                              </div>
+                            </div>
+                            ` : ''}
+
+                            ${item.invoiceNumber ? `
+                            <!-- Invoice Number -->
+                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #f59e0b;">
+                              <div style="background: rgba(245, 158, 11, 0.15); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                              </div>
+                              <div style="flex: 1;">
+                                <div style="font-size: 10px; opacity: 0.8; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.5px;">NOTA FISCAL</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #f59e0b;">${item.invoiceNumber}</div>
+                              </div>
+                            </div>
+                            ` : ''}
+
+                            ${item.ixcClientCode ? `
+                            <!-- IXC Client Code -->
+                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #06b6d4;">
+                              <div style="background: rgba(6, 182, 212, 0.15); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                              </div>
+                              <div style="flex: 1;">
+                                <div style="font-size: 10px; opacity: 0.8; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.5px;">CÓDIGO CLIENTE IXC</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #06b6d4;">${item.ixcClientCode}</div>
+                              </div>
+                            </div>
+                            ` : ''}
+
+                            ${item.usageNote ? `
+                            <!-- Usage Note -->
+                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; display: flex; align-items: start; gap: 10px; border-left: 3px solid #8b5cf6;">
+                              <div style="background: rgba(139, 92, 246, 0.15); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                              </div>
+                              <div style="flex: 1;">
+                                <div style="font-size: 10px; opacity: 0.8; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.5px;">OBSERVAÇÕES</div>
+                                <div style="font-size: 13px; line-height: 1.5; opacity: 0.95;">${item.usageNote}</div>
+                              </div>
+                            </div>
+                            ` : ''}
+
+                            ${!item.serialNumber && !item.macAddress && !item.invoiceNumber && !item.ixcClientCode && !item.usageNote ? `
+                            <div style="text-align: center; padding: 30px; opacity: 0.7;">
+                              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 12px; opacity: 0.5;">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                              </svg>
+                              <div style="font-size: 14px; font-weight: 600;">Nenhum detalhe adicional disponível</div>
+                            </div>
+                            ` : ''}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
               </div>
             `;
@@ -765,6 +917,20 @@
     //   if (e.target.id === 'modal') hideModal();
     //   if (e.target.id === 'stockModal') hideStockModal();
     // };
+
+    // Toggle detalhes do item
+    function toggleItemDetails(itemId) {
+      const detailsDiv = document.getElementById(itemId);
+      const btnText = document.getElementById(`${itemId}-btn-text`);
+
+      if (detailsDiv.style.display === 'none') {
+        detailsDiv.style.display = 'block';
+        btnText.textContent = 'Ocultar Detalhes';
+      } else {
+        detailsDiv.style.display = 'none';
+        btnText.textContent = 'Ver Detalhes';
+      }
+    }
 
     init();
   </script>

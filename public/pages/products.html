@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produtos - NetInFi</title>
+  <title>Produtos - RCONTROL</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     @keyframes pulse {
@@ -84,16 +84,23 @@
     <div class="container">
       <div class="header-content">
         <a href="/pages/dashboard.html" class="logo">
-          <div class="logo-icon">NI</div>
-          <span>NetInFi</span>
+          <div class="logo-icon">R</div>
+          <span>CONTROL</span>
         </a>
-        <nav class="nav">
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="nav" id="navMenu">
           <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
           <a href="/pages/products.html" class="nav-link active">Produtos</a>
           <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
           <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
           <a href="/pages/transfers.html" class="nav-link">Saída</a>
-          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="/pages/contabilizacao.html" class="nav-link">Contabilização</a>
           <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
         </nav>
       </div>
@@ -320,16 +327,19 @@
         <!-- Área de Lista de Unidades -->
         <div id="unitsListArea">
           <!-- Toolbar de Ações -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">
-              <span id="unitsCountText">Unidades em Estoque</span>
-            </h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div id="unitsCountText">Unidades em Estoque</div>
             <div style="display: flex; gap: 10px;">
-              <button type="button" onclick="selectAllUnits()" id="selectAllBtn" class="btn" style="padding: 7px 14px; font-size: 13px; background: var(--primary); color: white; border-radius: 6px; font-weight: 600;">
-                ✓ Selecionar Tudo
+              <button type="button" onclick="selectAllUnits()" id="selectAllBtn" class="btn" style="padding: 8px 16px; font-size: 13px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; font-weight: 600; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); border: none; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(102, 126, 234, 0.3)'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Selecionar Tudo
               </button>
-              <button type="button" onclick="showBulkForm()" id="bulkFormBtn" class="btn" style="padding: 7px 14px; font-size: 13px; background: var(--success); color: white; border-radius: 6px; font-weight: 600; display: none;">
-                <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+              <button type="button" onclick="showBulkForm()" id="bulkFormBtn" class="btn" style="padding: 8px 16px; font-size: 13px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; font-weight: 600; display: none; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3); border: none; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(16, 185, 129, 0.3)'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;">
+                  <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
                 Vincular MAC/Serial
               </button>
             </div>
@@ -559,6 +569,7 @@
     </div>
   </div>
 
+  <script src="/js/menu.js"></script>
   <script src="/js/auth.js"></script>
   <script>
     let products = [];
@@ -1102,8 +1113,42 @@
           units = existingUnits;
         }
 
-        // Atualizar contador
-        document.getElementById('unitsCountText').textContent = `${units.length} Unidade${units.length !== 1 ? 's' : ''} em Estoque`;
+        // Atualizar contador com status
+        const availableUnits = units.filter(u => u.status === 'AVAILABLE' || !u.status).length;
+        const inUseUnits = units.filter(u => u.status === 'IN_USE').length;
+        const totalUnits = units.length;
+
+        let countHTML = `
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="M9 21V9"/>
+              </svg>
+              <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">${totalUnits} Unidade${totalUnits !== 1 ? 's' : ''}</span>
+            </div>
+        `;
+
+        if (inUseUnits > 0) {
+          countHTML += `
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                <span>${availableUnits} Disponíve${availableUnits !== 1 ? 'is' : 'l'}</span>
+              </div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>${inUseUnits} Em Mãos</span>
+              </div>
+            </div>
+          `;
+        }
+
+        countHTML += '</div>';
+        document.getElementById('unitsCountText').innerHTML = countHTML;
 
         renderUnits();
 
@@ -1136,6 +1181,7 @@
         <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
           ${units.map((unit, index) => {
             const isInutilized = unit.status === 'INUTILIZED';
+            const isInUse = unit.status === 'IN_USE';
             const awaitingReplacement = unit.awaitingReplacement;
 
             return `
@@ -1144,27 +1190,36 @@
                 grid-template-columns: auto 1fr auto;
                 gap: 16px;
                 align-items: center;
-                padding: 14px 16px;
+                padding: 16px;
                 border-bottom: 1px solid var(--border-color);
-                transition: background 0.2s ease;
-                ${awaitingReplacement ? 'background: rgba(210, 153, 34, 0.1);' : ''}
-              " onmouseenter="this.style.background='var(--bg-tertiary)'" onmouseleave="this.style.background='${awaitingReplacement ? 'rgba(210, 153, 34, 0.1)' : 'transparent'}'">
+                transition: all 0.3s ease;
+                ${awaitingReplacement ? 'background: rgba(210, 153, 34, 0.08);' : ''}
+                ${isInUse ? 'background: linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, rgba(245, 158, 11, 0.05) 100%); border-left: 4px solid #f59e0b; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);' : ''}
+              " onmouseenter="this.style.background='var(--bg-tertiary)'; this.style.boxShadow='${isInUse ? '0 4px 12px rgba(245, 158, 11, 0.2)' : '0 2px 8px rgba(0,0,0,0.1)'}'" onmouseleave="this.style.background='${awaitingReplacement ? 'rgba(210, 153, 34, 0.08)' : isInUse ? 'linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, rgba(245, 158, 11, 0.05) 100%)' : 'transparent'}'; this.style.boxShadow='${isInUse ? '0 2px 8px rgba(245, 158, 11, 0.1)' : 'none'}'">
 
                 <!-- Checkbox -->
-                ${!isInutilized ? `
+                ${!isInutilized && !isInUse ? `
                   <input type="checkbox"
                     class="unit-checkbox"
                     data-unit-id="${unit.id}"
                     data-unit-index="${index}"
                     onchange="updateSelectedCount()"
-                    style="width: 18px; height: 18px; cursor: pointer;">
-                ` : '<div style="width: 18px;"></div>'}
+                    style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                ` : '<div style="width: 20px;"></div>'}
 
                 <!-- Informações da Unidade -->
                 <div>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${currentProductName}</span>
-                    <code style="background: var(--bg-tertiary); color: var(--primary); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">#${index + 1}</code>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                    <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">${currentProductName}</span>
+                    <code style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">#${index + 1}</code>
+                    ${isInUse ? `
+                      <span style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 5px 12px; border-radius: 16px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span style="text-shadow: 0 1px 2px rgba(0,0,0,0.1);">EM MÃOS COM TÉCNICO</span>
+                      </span>
+                    ` : ''}
                     ${unit.invoiceNumber ? `
                       <span style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 86, 179, 0.1) 100%); border: 1px solid rgba(0, 123, 255, 0.3); color: var(--primary); padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -1180,32 +1235,76 @@
                       <span style="color: var(--warning); font-size: 11px; font-weight: 700;">⚠️ INUTILIZADO</span>
                     ` : ''}
                   </div>
-                  <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 20px;">
-                    <span><strong>Serial:</strong> ${unit.serialNumber || '<em>não cadastrado</em>'}</span>
-                    <span><strong>MAC:</strong> ${unit.macAddress || '<em>não cadastrado</em>'}</span>
+                  <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-tertiary); padding: 6px 12px; border-radius: 6px; ${isInUse ? 'border: 1px solid rgba(245, 158, 11, 0.3);' : ''}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isInUse ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                      </svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Serial:</span>
+                      <span style="font-size: 12px; font-weight: 700; font-family: 'Courier New', monospace; color: ${isInUse ? '#f59e0b' : 'var(--text-primary)'};">${unit.serialNumber || '<em style="opacity: 0.5;">não cadastrado</em>'}</span>
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-tertiary); padding: 6px 12px; border-radius: 6px; ${isInUse ? 'border: 1px solid rgba(245, 158, 11, 0.3);' : ''}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isInUse ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                      </svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">MAC:</span>
+                      <span style="font-size: 12px; font-weight: 700; font-family: 'Courier New', monospace; color: ${isInUse ? '#f59e0b' : 'var(--text-primary)'};">${unit.macAddress || '<em style="opacity: 0.5;">não cadastrado</em>'}</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Botões de Ação -->
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-                  <button onclick="viewUnitDetails(${unit.id})" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--info); color: white;">
-                    <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
+                  <button
+                    onclick="viewUnitDetails(${unit.id})"
+                    class="btn"
+                    style="padding: 9px 16px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); transition: all 0.3s ease; border: none; cursor: pointer;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.5)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(59, 130, 246, 0.3)'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
                     Ver Detalhes
                   </button>
-                  ${!isInutilized ? `
-                    <button onclick="confirmInutilizeUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}', '${unit.invoiceNumber || 'N/A'}', '${unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A'}')" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--warning); color: white;">
-                      <svg class="icon-svg" fill="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+                  ${!isInutilized && !isInUse ? `
+                    <button
+                      onclick="confirmInutilizeUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}', '${unit.invoiceNumber || 'N/A'}', '${unit.invoiceDate ? new Date(unit.invoiceDate).toLocaleDateString('pt-BR') : 'N/A'}')"
+                      class="btn"
+                      style="padding: 9px 16px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); transition: all 0.3s ease; border: none; cursor: pointer;"
+                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.5)'"
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(245, 158, 11, 0.3)'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                      </svg>
                       Inutilizar
                     </button>
-                  ` : `
-                    <button onclick="viewReplacementReport(${unit.id})" class="btn" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--success); color: white;">
-                      <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  ` : isInutilized ? `
+                    <button
+                      onclick="viewReplacementReport(${unit.id})"
+                      class="btn"
+                      style="padding: 9px 16px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3); transition: all 0.3s ease; border: none; cursor: pointer;"
+                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.5)'"
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(16, 185, 129, 0.3)'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
                       Relatório
                     </button>
-                  `}
-                  <button onclick="confirmDeleteUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}')" class="btn btn-danger" style="padding: 8px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                    ${icons.trash} Deletar
-                  </button>
+                  ` : ''}
+                  ${!isInUse ? `
+                    <button
+                      onclick="confirmDeleteUnit(${unit.id}, '${currentProductName.replace(/'/g, "\\'")} #${index + 1}')"
+                      class="btn"
+                      style="padding: 9px 16px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); transition: all 0.3s ease; border: none; cursor: pointer;"
+                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.5)'"
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(239, 68, 68, 0.3)'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                      Deletar
+                    </button>
+                  ` : ''}
                 </div>
               </div>
             `;

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contabilização - RCONTROL</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .main-container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+
+    .filter-section {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 14px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .filter-input:hover {
+      border-color: rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    /* Estilo para select */
+    select.filter-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+    /* Estilo para as opções do select */
+    select.filter-input option {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 12px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    select.filter-input option:hover {
+      background: #334155;
+    }
+
+    select.filter-input option:checked {
+      background: #3b82f6;
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Estilo para inputs de data */
+    input[type="date"].filter-input {
+      color-scheme: dark;
+      padding-right: 12px;
+    }
+
+    input[type="date"].filter-input::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      filter: invert(0.7);
+      transition: filter 0.2s;
+    }
+
+    input[type="date"].filter-input::-webkit-calendar-picker-indicator:hover {
+      filter: invert(1);
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .filter-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .filter-btn:hover::before {
+      left: 100%;
+    }
+
+    .filter-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .filter-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-btn-clear {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+    }
+
+    .filter-btn-clear::before {
+      background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.2), transparent);
+    }
+
+    .filter-btn-clear:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.25));
+      border-color: rgba(239, 68, 68, 0.6);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .filter-btn-clear:active {
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .technician-section {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .technician-header {
+      background: rgba(59, 130, 246, 0.1);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .technician-header:hover {
+      background: rgba(59, 130, 246, 0.15);
+    }
+
+    .technician-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .technician-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .technician-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .technician-category {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .technician-count {
+      background: #3b82f6;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .items-table thead {
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .items-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .items-table td {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(148, 163, 184, 0.05);
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+
+    .items-table tr {
+      transition: all 0.2s;
+    }
+
+    .items-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .product-name {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .product-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    .badge-client {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #10b981;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .usage-note {
+      background: rgba(148, 163, 184, 0.1);
+      border-left: 3px solid #3b82f6;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapsible-content.active {
+      max-height: 3000px;
+    }
+
+    .expand-icon {
+      transition: transform 0.3s;
+    }
+
+    .expand-icon.active {
+      transform: rotate(180deg);
+    }
+
+    .btn-details {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 6px;
+      color: #3b82f6;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-details:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.25));
+      border-color: rgba(59, 130, 246, 0.6);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-details:active {
+      transform: translateY(0);
+    }
+
+    /* Modal de Detalhes */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.75);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      margin: 5% auto;
+      padding: 0;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 700px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: modalSlideIn 0.2s ease-out;
+      will-change: transform, opacity;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translate3d(0, -20px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .close {
+      color: #94a3b8;
+      font-size: 28px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .close:hover {
+      color: #e2e8f0;
+      background: rgba(148, 163, 184, 0.1);
+    }
+
+    .modal-body {
+      padding: 24px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .detail-group {
+      background: rgba(15, 23, 42, 0.4);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .detail-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      font-size: 13px;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .detail-value-highlight {
+      color: #3b82f6;
+      font-weight: 700;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/pages/dashboard.html" class="logo">
+          <div class="logo-icon">R</div>
+          <span>CONTROL</span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="nav" id="navMenu">
+          <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/pages/products.html" class="nav-link">Produtos</a>
+          <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
+          <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
+          <a href="/pages/transfers.html" class="nav-link">Saída</a>
+          <a href="/pages/contabilizacao.html" class="nav-link active">Contabilização</a>
+          <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            <svg style="width: 26px; height: 26px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 style="font-size: 24px; font-weight: 700; margin: 0; color: #e2e8f0; line-height: 1.2;">
+              Contabilização de Uso
+            </h2>
+            <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0; font-weight: 500;">Visualize os itens utilizados por técnico</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="filter-label">
+              <svg style="width: 14px; height: 14px; color: #ec4899;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              Técnico
+            </label>
+            <select id="technicianFilter" class="filter-input" onchange="renderUsageData()">
+              <option value="">Todos os Técnicos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">
+              <svg style="width: 14px; height: 14px; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              Produto
+            </label>
+            <select id="productFilter" class="filter-input" onchange="renderUsageData()">
+              <option value="">Todos os Produtos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">
+              <svg style="width: 14px; height: 14px; color: #06b6d4;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              Data Inicial
+            </label>
+            <input type="date" id="startDate" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">
+              <svg style="width: 14px; height: 14px; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              Data Final
+            </label>
+            <input type="date" id="endDate" class="filter-input">
+          </div>
+          <div>
+            <button class="filter-btn" onclick="loadData()">
+              <svg style="width: 16px; height: 16px; display: inline; margin-right: 6px; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              Filtrar
+            </button>
+          </div>
+          <div>
+            <button class="filter-btn filter-btn-clear" onclick="clearFilters()">
+              <svg style="width: 16px; height: 16px; display: inline; margin-right: 6px; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="summarySection" style="display: none;">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Total de Itens Usados</div>
+            <div class="summary-value" id="totalItems">0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Técnicos Ativos</div>
+            <div class="summary-value" id="totalTechnicians">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="content">
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de Detalhes -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detalhes do Item</h3>
+        <span class="close" onclick="hideDetailsModal()">&times;</span>
+      </div>
+      <div class="modal-body" id="detailsContent">
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/menu.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    let usageData = [];
+    let summaryData = null;
+    let technicians = [];
+    let products = [];
+
+    // Cache para evitar requisições repetidas
+    const transferCache = new Map();
+    const instanceCache = new Map();
+    let isModalLoading = false;
+
+    async function init() {
+      await AuthService.requireAuth();
+      // Definir data padrão: últimos 30 dias
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+
+      document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+      document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+      await Promise.all([loadTechnicians(), loadProducts()]);
+      await loadData();
+    }
+
+    async function loadTechnicians() {
+      try {
+        const response = await fetch('/technicians', { credentials: 'include' });
+        technicians = await response.json();
+
+        const select = document.getElementById('technicianFilter');
+        select.innerHTML = '<option value="">Todos os Técnicos</option>' +
+          technicians
+            .filter(t => t.isActive)
+            .map(t => `<option value="${t.id}">${t.name}</option>`)
+            .join('');
+      } catch (e) {
+        console.error('Erro ao carregar técnicos:', e);
+      }
+    }
+
+    async function loadProducts() {
+      try {
+        const response = await fetch('/products', { credentials: 'include' });
+        products = await response.json();
+
+        const select = document.getElementById('productFilter');
+        select.innerHTML = '<option value="">Todos os Produtos</option>' +
+          products
+            .map(p => `<option value="${p.id}">${p.name}</option>`)
+            .join('');
+      } catch (e) {
+        console.error('Erro ao carregar produtos:', e);
+      }
+    }
+
+    async function loadData() {
+      try {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        let params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+
+        const [usageRes, summaryRes] = await Promise.all([
+          fetch(`/accounting/usage-by-technician?${params}`, { credentials: 'include' }),
+          fetch(`/accounting/usage-summary?${params}`, { credentials: 'include' })
+        ]);
+
+        usageData = await usageRes.json();
+        summaryData = await summaryRes.json();
+
+        renderSummary();
+        renderUsageData();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('content').innerHTML = '<p style="text-align: center; color: var(--danger); padding: 20px;">Erro ao carregar dados</p>';
+      }
+    }
+
+    function renderSummary() {
+      if (!summaryData) return;
+
+      document.getElementById('summarySection').style.display = 'block';
+      document.getElementById('totalItems').textContent = summaryData.summary.totalItems;
+      document.getElementById('totalTechnicians').textContent = summaryData.summary.totalTechnicians;
+    }
+
+    function renderUsageData() {
+      const content = document.getElementById('content');
+      const selectedTechnicianId = document.getElementById('technicianFilter').value;
+      const selectedProductId = document.getElementById('productFilter').value;
+
+      // Filtrar por técnico se um foi selecionado
+      let filteredData = usageData;
+      if (selectedTechnicianId) {
+        const techId = parseInt(selectedTechnicianId);
+        filteredData = usageData.filter(tech => tech.technician.id === techId);
+      }
+
+      // Filtrar por produto se um foi selecionado
+      if (selectedProductId) {
+        const productId = parseInt(selectedProductId);
+        filteredData = filteredData
+          .map(tech => {
+            const filteredItems = tech.items.filter(item => item.product.id === productId);
+            if (filteredItems.length === 0) return null;
+            return {
+              ...tech,
+              items: filteredItems,
+              totalItems: filteredItems.length
+            };
+          })
+          .filter(tech => tech !== null);
+      }
+
+      if (!filteredData || filteredData.length === 0) {
+        let message = 'Não há registros de uso no período selecionado';
+        if (selectedTechnicianId && selectedProductId) {
+          message += ' para este técnico e produto';
+        } else if (selectedTechnicianId) {
+          message += ' para este técnico';
+        } else if (selectedProductId) {
+          message += ' para este produto';
+        }
+
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <h3 style="color: #e2e8f0; margin-bottom: 8px;">Nenhum item usado encontrado</h3>
+            <p>${message}.</p>
+          </div>
+        `;
+        return;
+      }
+
+      content.innerHTML = filteredData.map((tech, index) => `
+        <div class="technician-section">
+          <div class="technician-header" onclick="toggleSection(${index})">
+            <div class="technician-info">
+              <div class="technician-icon">${tech.technician.name.substring(0, 2).toUpperCase()}</div>
+              <div>
+                <div class="technician-name">${tech.technician.name}</div>
+                <div class="technician-category">${tech.technician.category || 'Técnico'}</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="technician-count">${tech.totalItems} ${tech.totalItems === 1 ? 'item' : 'itens'}</div>
+              <svg class="expand-icon" id="icon-${index}" style="width: 20px; height: 20px; color: #64748b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="collapsible-content" id="content-${index}">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Quantidade</th>
+                  <th>Cliente IXC</th>
+                  <th>Data de Uso</th>
+                  <th>Transferência</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tech.items.map(item => `
+                  <tr>
+                    <td>
+                      <div class="product-name">${item.product.name}</div>
+                      ${item.serialNumber ? `<div class="product-meta">SN: ${item.serialNumber}</div>` : ''}
+                      ${item.macAddress ? `<div class="product-meta">MAC: ${item.macAddress}</div>` : ''}
+                      ${item.usageNote ? `<div class="usage-note">💬 ${item.usageNote}</div>` : ''}
+                    </td>
+                    <td>${item.quantity} ${item.product.unit || 'un'}</td>
+                    <td>
+                      ${item.ixcClientCode ? `<span class="badge-client">${item.ixcClientCode}</span>` : '<span style="color: #64748b;">-</span>'}
+                    </td>
+                    <td>${new Date(item.usedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                    <td>
+                      <span style="color: #3b82f6; font-weight: 600; font-family: monospace;">${item.transfer.number}</span>
+                    </td>
+                    <td style="text-align: center;">
+                      <button class="btn-details" onclick="showItemDetails(${item.transfer.id}, ${item.id})" title="Ver detalhes da Nota Fiscal">
+                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Detalhes
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+
+      // Expandir a primeira seção por padrão
+      if (filteredData.length > 0) {
+        toggleSection(0);
+      }
+    }
+
+    function toggleSection(index) {
+      const content = document.getElementById(`content-${index}`);
+      const icon = document.getElementById(`icon-${index}`);
+
+      if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        icon.classList.remove('active');
+      } else {
+        content.classList.add('active');
+        icon.classList.add('active');
+      }
+    }
+
+    function clearFilters() {
+      // Definir data padrão: últimos 30 dias
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+
+      document.getElementById('technicianFilter').value = '';
+      document.getElementById('productFilter').value = '';
+      document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+      document.getElementById('endDate').value = today.toISOString().split('T')[0];
+      loadData();
+    }
+
+    async function showItemDetails(transferId, itemId) {
+      // Prevenir múltiplos cliques
+      if (isModalLoading) return;
+      isModalLoading = true;
+
+      const modal = document.getElementById('detailsModal');
+      const content = document.getElementById('detailsContent');
+
+      // Mostrar loading
+      content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+          <div class="loading"></div>
+          <p style="color: #94a3b8; margin-top: 16px;">Carregando detalhes...</p>
+        </div>
+      `;
+
+      modal.style.display = 'block';
+
+      try {
+        // Buscar detalhes da transferência (com cache)
+        let transfer = transferCache.get(transferId);
+        if (!transfer) {
+          const response = await fetch(`/transfers/${transferId}`, { credentials: 'include' });
+          transfer = await response.json();
+          transferCache.set(transferId, transfer);
+        }
+
+        // Encontrar o item específico
+        const item = transfer.items.find(i => i.id === itemId);
+
+        if (!item) {
+          content.innerHTML = '<p style="text-align: center; color: var(--danger); padding: 20px;">Item não encontrado</p>';
+          isModalLoading = false;
+          return;
+        }
+
+        // Buscar detalhes da instância do produto se tiver (com cache)
+        let productInstance = null;
+        if (item.productInstanceId) {
+          productInstance = instanceCache.get(item.productInstanceId);
+          if (!productInstance) {
+            try {
+              const instResponse = await fetch(`/product-instances/${item.productInstanceId}`, { credentials: 'include' });
+              if (instResponse.ok) {
+                productInstance = await instResponse.json();
+                instanceCache.set(item.productInstanceId, productInstance);
+              }
+            } catch (e) {
+              console.log('Erro ao buscar instância:', e);
+            }
+          }
+        }
+
+        // Renderizar detalhes de forma otimizada
+        renderModalContent(content, item, transfer, productInstance);
+      } catch (e) {
+        console.error('Erro ao carregar detalhes:', e);
+        content.innerHTML = '<p style="text-align: center; color: var(--danger); padding: 20px;">Erro ao carregar detalhes</p>';
+      } finally {
+        isModalLoading = false;
+      }
+    }
+
+    // Função separada para renderização otimizada
+    function renderModalContent(content, item, transfer, productInstance) {
+      const sections = [];
+
+      // Seção de Produto
+      sections.push(`
+        <div class="detail-group">
+          <div class="detail-group-title">
+            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            Informações do Produto
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Produto:</div>
+            <div class="detail-value"><strong>${item.product.name}</strong></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">SKU:</div>
+            <div class="detail-value">${item.product.sku || '-'}</div>
+          </div>
+          ${item.serialNumber ? `<div class="detail-row"><div class="detail-label">Serial Number:</div><div class="detail-value detail-value-highlight">${item.serialNumber}</div></div>` : ''}
+          ${item.macAddress ? `<div class="detail-row"><div class="detail-label">MAC Address:</div><div class="detail-value detail-value-highlight">${item.macAddress}</div></div>` : ''}
+          <div class="detail-row">
+            <div class="detail-label">Quantidade:</div>
+            <div class="detail-value">${item.quantity} ${item.product.unit || 'un'}</div>
+          </div>
+        </div>
+      `);
+
+      // Seção de Nota Fiscal (se existir)
+      if (productInstance) {
+        const nfRows = [];
+        if (productInstance.invoiceNumber) nfRows.push(`<div class="detail-row"><div class="detail-label">Número da NF:</div><div class="detail-value detail-value-highlight">${productInstance.invoiceNumber}</div></div>`);
+        if (productInstance.invoiceDate) nfRows.push(`<div class="detail-row"><div class="detail-label">Data da NF:</div><div class="detail-value">${new Date(productInstance.invoiceDate).toLocaleDateString('pt-BR')}</div></div>`);
+        if (productInstance.supplier) nfRows.push(`<div class="detail-row"><div class="detail-label">Fornecedor:</div><div class="detail-value">${productInstance.supplier}</div></div>`);
+        if (productInstance.receivedAt) nfRows.push(`<div class="detail-row"><div class="detail-label">Data de Recebimento:</div><div class="detail-value">${new Date(productInstance.receivedAt).toLocaleDateString('pt-BR')}</div></div>`);
+        if (productInstance.entryDate) nfRows.push(`<div class="detail-row"><div class="detail-label">Cadastrado em Estoque:</div><div class="detail-value">${new Date(productInstance.entryDate).toLocaleString('pt-BR')}</div></div>`);
+        if (productInstance.note) nfRows.push(`<div class="detail-row"><div class="detail-label">Observações NF:</div><div class="detail-value">${productInstance.note}</div></div>`);
+
+        sections.push(`
+          <div class="detail-group" style="border-left-color: #10b981;">
+            <div class="detail-group-title">
+              <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Nota Fiscal de Entrada
+            </div>
+            ${nfRows.join('')}
+          </div>
+        `);
+      }
+
+      // Seção de Uso
+      const useRows = [];
+      if (item.ixcClientCode) useRows.push(`<div class="detail-row"><div class="detail-label">Cliente IXC:</div><div class="detail-value"><span class="badge-client">${item.ixcClientCode}</span></div></div>`);
+      if (item.usageNote) useRows.push(`<div class="detail-row"><div class="detail-label">Observações de Uso:</div><div class="detail-value">${item.usageNote}</div></div>`);
+      useRows.push(`<div class="detail-row"><div class="detail-label">Data de Uso:</div><div class="detail-value">${new Date(item.usedAt).toLocaleString('pt-BR')}</div></div>`);
+      useRows.push(`<div class="detail-row"><div class="detail-label">Transferência:</div><div class="detail-value detail-value-highlight">${transfer.number}</div></div>`);
+
+      sections.push(`
+        <div class="detail-group" style="border-left-color: #ec4899;">
+          <div class="detail-group-title">
+            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Informações de Uso
+          </div>
+          ${useRows.join('')}
+        </div>
+      `);
+
+      content.innerHTML = sections.join('');
+    }
+
+    function hideDetailsModal() {
+      document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    // Fechar modal ao clicar fora
+    window.onclick = function(event) {
+      const modal = document.getElementById('detailsModal');
+      if (event.target === modal) {
+        hideDetailsModal();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

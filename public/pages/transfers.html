@@ -3,540 +3,494 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saída - NetInFi</title>
+  <title>Saída - RCONTROL</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
+    /* Container */
+    .main-container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+
+    /* Grid de Cards */
     .transfers-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
-      margin-top: 0;
+      margin-top: 20px;
     }
 
-    @media (min-width: 1400px) {
-      .transfers-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (min-width: 1920px) {
-      .transfers-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
+    /* Transfer Card */
     .transfer-card {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 12px;
-      padding: 16px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .transfer-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Header do Card */
+    .card-header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .transfer-number {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+
+    /* Info Box */
+    .info-box {
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-box-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .info-label {
+      font-size: 9px;
+      color: #64748b;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .info-value {
+      font-size: 12px;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    /* Timer */
+    .timer-box {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1e293b;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 700;
+      margin: 8px 0;
       position: relative;
       overflow: hidden;
     }
 
-    .transfer-card::before {
+    .timer-box::before {
       content: '';
       position: absolute;
       top: 0;
-      left: 0;
+      left: -100%;
       width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-      opacity: 0;
-      transition: opacity 0.3s;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
     }
 
-    .transfer-card:hover {
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-      transform: translateY(-8px);
-      border-color: rgba(148, 163, 184, 0.2);
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
     }
 
-    .transfer-card:hover::before {
-      opacity: 1;
+    .timer-clock {
+      display: inline-block;
+      animation: clockPulse 2s ease-in-out infinite;
+      margin-right: 6px;
     }
 
-    .transfer-card.pulsing-card {
-      animation: cardPulse 3s ease-in-out infinite;
-      border-color: rgba(251, 191, 36, 0.3);
+    @keyframes clockPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
     }
 
-    .transfer-card.pulsing-card::before {
-      opacity: 1;
-      background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
-      animation: gradientShift 3s ease-in-out infinite;
-    }
-
-    @keyframes cardPulse {
-      0%, 100% {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(251, 191, 36, 0.4);
-      }
-      50% {
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px 10px rgba(251, 191, 36, 0.3);
-      }
-    }
-
-    @keyframes gradientShift {
-      0%, 100% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-    }
-
-    .transfer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .transfer-number {
-      font-size: 18px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .transfer-info {
-      margin: 10px 0;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
-    .transfer-info strong {
-      color: var(--text);
-    }
-
+    /* Progress */
     .progress-container {
-      margin: 12px 0;
+      margin: 8px 0;
       background: rgba(15, 23, 42, 0.6);
-      border-radius: 8px;
-      padding: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 6px;
+      padding: 8px;
     }
 
     .progress-label {
       display: flex;
       justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 10px;
+      font-size: 11px;
+      margin-bottom: 6px;
       color: #94a3b8;
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    .progress-bar-track {
-      height: 12px;
+    .progress-bar {
+      height: 8px;
       background: rgba(30, 41, 59, 0.8);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
-      position: relative;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
-    .progress-bar-fill {
+    .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #10b981, #059669, #10b981);
-      background-size: 200% 100%;
-      border-radius: 12px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-      animation: progressShine 2s ease-in-out infinite;
+      background: linear-gradient(90deg, #10b981, #059669);
+      border-radius: 10px;
+      transition: width 0.5s;
     }
 
-    .progress-bar-fill::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-      );
-      animation: shimmer 2s infinite;
-    }
-
-    .progress-bar-fill.pulsing {
-      background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
-      background-size: 200% 100%;
-      animation: progressShine 2s ease-in-out infinite, pulse 2s ease-in-out infinite;
-      box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-    }
-
-    @keyframes progressShine {
-      0%, 100% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-    }
-
-    @keyframes shimmer {
-      0% {
-        transform: translateX(-100%);
-      }
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-        transform: scaleY(1);
-      }
-      50% {
-        opacity: 0.8;
-        transform: scaleY(0.95);
-      }
-    }
-
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .clock-icon {
-      display: inline-block;
-      animation: spin 3s linear infinite;
-    }
-
-    @keyframes slideOut {
-      from {
-        opacity: 1;
-        transform: translateX(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-    }
-
-    .items-list {
-      margin: 15px 0;
-      max-height: 200px;
+    /* Items List */
+    .items-compact {
+      margin: 8px 0;
+      max-height: 160px;
       overflow-y: auto;
     }
 
-    .item-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .item-compact {
       padding: 8px;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 5px;
+      border-left: 3px solid #3b82f6;
+      margin-bottom: 6px;
     }
 
-    .item-row:last-child {
-      border-bottom: none;
+    .item-compact.used { border-left-color: #10b981; }
+    .item-compact.in-hands { border-left-color: #fbbf24; }
+
+    .item-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 3px;
     }
 
-    .item-product {
+    .item-meta {
+      font-size: 10px;
+      color: #64748b;
+      font-family: monospace;
+    }
+
+    /* Buttons Leves e Modernos */
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .btn-compact {
       flex: 1;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
     }
 
-    .item-serial {
-      font-size: 11px;
-      color: var(--text-muted);
+    .btn-compact svg {
+      flex-shrink: 0;
     }
 
-    .search-box {
-      position: relative;
+    .btn-primary-grad {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-success-grad {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-info-grad {
+      background: #06b6d4;
+      color: white;
+    }
+
+    .btn-warning-grad {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .btn-danger-grad {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-compact:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-compact:active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Botões de ação nos itens */
+    .item-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .btn-item {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .btn-item svg {
+      flex-shrink: 0;
+    }
+
+    .btn-item:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-item:active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
       margin-bottom: 20px;
-      z-index: 100;
+      flex-wrap: wrap;
     }
 
-    .search-box input {
-      padding-right: 40px;
-      transition: all 0.3s;
+    .filter-tab {
+      padding: 8px 14px;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 7px;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
     }
 
-    .search-box input:focus {
+    .filter-tab:hover {
+      background: rgba(30, 41, 59, 0.5);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .filter-tab.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .filter-count {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+
+    /* Modal */
+    .modal-compact {
+      max-width: 700px;
+      width: 90%;
+    }
+
+    .modal-body {
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .form-group-compact {
+      margin-bottom: 16px;
+    }
+
+    .form-label-compact {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-control-compact {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .form-control-compact:focus {
+      outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
 
-    .search-box input.has-value {
-      border-color: var(--success);
-    }
-
-    .search-icon {
+    /* Search Results */
+    .search-results {
       position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-      pointer-events: none;
-    }
-
-    .form-control:focus {
-      border-color: var(--primary);
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-    }
-
-    .product-search-results {
-      border: 1px solid #444;
-      border-radius: 6px;
-      max-height: 280px;
-      overflow-y: auto;
-      background: #1a1a1a;
-      position: absolute;
-      width: 100%;
-      z-index: 9999;
-      display: none;
-      margin-top: 8px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
       top: 100%;
       left: 0;
+      right: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      margin-top: 4px;
+      z-index: 1000;
+      display: none;
     }
 
-    .product-search-results.active {
-      display: block;
-    }
+    .search-results.active { display: block; }
 
-    .search-result-category {
-      padding: 10px 14px;
-      background: #0d0d0d;
-      font-size: 11px;
-      color: #888;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid #333;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .search-result-item {
-      padding: 14px;
+    .search-item {
+      padding: 12px;
       cursor: pointer;
       border-bottom: 1px solid #2a2a2a;
-      transition: all 0.2s ease;
-      line-height: 1.6;
-      background: #1a1a1a;
+      transition: all 0.2s;
     }
 
-    .search-result-item:hover {
+    .search-item:hover {
       background: #2a2a2a;
       border-left: 3px solid var(--primary);
-      padding-left: 11px;
     }
 
-    .search-result-item:last-child {
-      border-bottom: none;
-      border-bottom-left-radius: 6px;
-      border-bottom-right-radius: 6px;
-    }
-
-    .search-result-title {
-      font-weight: 600;
+    .search-title {
       font-size: 14px;
-      margin-bottom: 5px;
-      display: block;
+      font-weight: 600;
       color: #fff;
+      margin-bottom: 4px;
     }
 
-    .search-result-details {
+    .search-meta {
       font-size: 12px;
       color: #888;
-      display: block;
-      font-family: 'Courier New', monospace;
     }
 
-    .search-result-item:hover .search-result-details {
-      color: #aaa;
-    }
-
-    .search-result-empty {
-      padding: 30px;
-      text-align: center;
-      color: #666;
-      font-size: 13px;
-    }
-
-    .search-result-empty-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-      opacity: 0.5;
-    }
-
-    .modal-large {
-      max-width: 900px;
-    }
-
-    .items-table {
-      margin-top: 15px;
-    }
-
-    .add-item-row {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 12px;
+    /* Item Row */
+    .item-row {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
       position: relative;
-      transition: all 0.3s;
-      z-index: 1;
-    }
-
-    .add-item-row:focus-within {
-      z-index: 10;
-    }
-
-    .add-item-row:hover {
-      border-color: var(--primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .item-row-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .item-row-number {
-      font-weight: 600;
-      color: var(--primary);
-      font-size: 14px;
-    }
-
-    .item-row-fields {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      position: relative;
-    }
-
-    .item-row-fields .full-width {
-      grid-column: 1 / -1;
       margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
     }
 
-    .remove-item-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
+    .remove-btn {
       background: var(--danger);
       color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
       font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
     }
 
-    .remove-item-btn:hover {
-      background: #c62828;
-      transform: scale(1.1);
-    }
-
-    .detail-modal .item-detail {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 120px;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      margin-bottom: 10px;
-      align-items: center;
-    }
-
-    .item-detail.used {
-      background: #e8f5e9;
-    }
-
-    .item-detail.returned {
-      background: #e3f2fd;
-    }
-
-    .filter-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    .filter-tab {
-      padding: 10px 18px;
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 10px;
-      cursor: pointer;
-      color: #94a3b8;
-      font-weight: 600;
+    .selected-product {
+      padding: 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      margin-top: 8px;
       font-size: 13px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      gap: 8px;
       position: relative;
-      overflow: hidden;
     }
 
-    .filter-tab::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-      opacity: 0;
-      transition: opacity 0.3s;
+    /* Modal Footer */
+    .modal-footer-compact {
+      display: flex;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
     }
 
-    .filter-tab:hover::before {
-      opacity: 1;
+    .modal-footer-compact .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .filter-tab.active {
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-color: transparent;
-      color: white;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-      transform: translateY(-2px);
+    /* Detail Modal */
+    .detail-section {
+      background: rgba(15, 23, 42, 0.4);
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+      margin-bottom: 16px;
     }
 
-    .filter-tab:hover {
-      border-color: rgba(59, 130, 246, 0.5);
-      transform: translateY(-1px);
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
 
-    .filter-tab-count {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 2px 8px;
-      border-radius: 12px;
+    .detail-item-label {
       font-size: 11px;
-      font-weight: 700;
-      margin-left: 4px;
+      color: #64748b;
+      margin-bottom: 4px;
+      font-weight: 600;
     }
 
-    .filter-tab.active .filter-tab-count {
-      background: rgba(255, 255, 255, 0.3);
+    .detail-item-value {
+      font-size: 14px;
+      color: #e2e8f0;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -545,62 +499,92 @@
     <div class="container">
       <div class="header-content">
         <a href="/pages/dashboard.html" class="logo">
-          <div class="logo-icon">NI</div>
-          <span>NetInFi</span>
+          <div class="logo-icon">R</div>
+          <span>CONTROL</span>
         </a>
-        <nav class="nav">
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="nav" id="navMenu">
           <a href="/pages/dashboard.html" class="nav-link">Dashboard</a>
           <a href="/pages/products.html" class="nav-link">Produtos</a>
           <a href="/pages/technicians.html" class="nav-link">Técnicos</a>
           <a href="/pages/almoxarifados.html" class="nav-link">Almoxarifados</a>
           <a href="/pages/transfers.html" class="nav-link active">Saída</a>
-          <a href="/pages/reports.html" class="nav-link">Relatórios</a>
+          <a href="/pages/contabilizacao.html" class="nav-link">Contabilização</a>
           <a href="#" onclick="AuthService.logout(); return false;" class="nav-link">Sair</a>
         </nav>
       </div>
     </div>
   </header>
 
-  <main class="container" style="margin-top: 24px; max-width: 1800px;">
-    <div class="card" style="padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div>
-          <h2 style="font-size: 24px; font-weight: 700; margin: 0; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            📤 Saída de Produtos
-          </h2>
-          <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Gerencie as saídas de produtos para técnicos</p>
+  <main class="main-container">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #06b6d4, #0284c7); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+            <svg style="width: 26px; height: 26px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 style="font-size: 24px; font-weight: 700; margin: 0; color: #e2e8f0; line-height: 1.2;">
+              Saída de Produtos
+            </h2>
+            <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0; font-weight: 500;">Gerencie as saídas para técnicos</p>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="showNewTransferModal()" style="padding: 10px 20px; font-size: 14px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-          <span style="font-size: 16px; margin-right: 6px;">➕</span> Nova Saída
+        <button class="btn btn-primary" onclick="showNewTransferModal()" style="background: #10b981; border-radius: 8px; padding: 11px 20px; font-size: 13px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+          <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          Nova Saída
         </button>
       </div>
 
       <div class="filter-tabs">
         <button class="filter-tab active" onclick="setFilter(event, 'all')">
-          <span style="font-size: 16px;">📋</span>
-          <span>Todas</span>
-          <span class="filter-tab-count" id="count-all">0</span>
+          Todas <span class="filter-count" id="count-all">0</span>
         </button>
         <button class="filter-tab" onclick="setFilter(event, 'warehouse')">
-          <span style="font-size: 16px;">📦</span>
-          <span>Saída do Estoque</span>
-          <span class="filter-tab-count" id="count-warehouse">0</span>
+          Saída do Estoque <span class="filter-count" id="count-warehouse">0</span>
         </button>
         <button class="filter-tab" onclick="setFilter(event, 'in_hands')">
-          <span style="font-size: 16px;">🚚</span>
-          <span>Em Mãos</span>
-          <span class="filter-tab-count" id="count-in_hands">0</span>
+          Em Mãos <span class="filter-count" id="count-in_hands">0</span>
         </button>
         <button class="filter-tab" onclick="setFilter(event, 'finished')">
-          <span style="font-size: 16px;">✅</span>
-          <span>Finalizado</span>
-          <span class="filter-tab-count" id="count-finished">0</span>
+          Finalizado <span class="filter-count" id="count-finished">0</span>
         </button>
+        <button class="filter-tab" onclick="setFilter(event, 'canceled')">
+          Cancelados <span class="filter-count" id="count-canceled">0</span>
+        </button>
+      </div>
+
+      <!-- Filtro de Data (só visível em Cancelados) -->
+      <div id="dateFilter" style="display: none; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <label style="font-weight: 600; color: #10b981;">Filtrar por Data:</label>
+          </div>
+          <input type="date" id="dateFrom" style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px;" onchange="renderTransfers()">
+          <span style="color: #64748b;">até</span>
+          <input type="date" id="dateTo" style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px;" onchange="renderTransfers()">
+          <button onclick="clearDateFilter()" style="padding: 8px 16px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; color: #ef4444; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+            Limpar
+          </button>
+        </div>
       </div>
 
       <div id="content">
         <div style="text-align: center; padding: 40px;">
-          <div class="loading" style="margin: 0 auto;"></div>
+          <div class="loading"></div>
         </div>
       </div>
     </div>
@@ -608,106 +592,100 @@
 
   <!-- Modal: Nova Transferência -->
   <div id="newTransferModal" class="modal">
-    <div class="modal-content modal-large">
+    <div class="modal-content modal-compact">
       <div class="modal-header">
         <h3>Nova Transferência</h3>
-        <span class="close" onclick="hideNewTransferModal()">&times;</span>
+        <span class="close" onclick="hideModal('newTransferModal')">&times;</span>
       </div>
-      <form id="newTransferForm">
-        <div class="form-group">
-          <label class="form-label">Técnico *</label>
-          <select id="technicianId" class="form-control" required>
-            <option value="">Selecione o técnico...</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Produtos * <small style="color: var(--text-muted); font-weight: 400;">(mínimo 1 produto)</small></span>
-            <span id="itemCounter" style="font-size: 12px; color: var(--text-muted); font-weight: 400;">0 produto(s) adicionado(s)</span>
-          </label>
-
-          <div style="background: var(--background); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
-            <div id="itemsList"></div>
-
-            <div id="emptyItemsMessage" style="text-align: center; padding: 30px; color: var(--text-muted);">
-              <div style="font-size: 48px; margin-bottom: 10px;">📦</div>
-              <p>Nenhum produto adicionado ainda</p>
-            </div>
+      <div class="modal-body">
+        <form id="newTransferForm">
+          <div class="form-group-compact">
+            <label class="form-label-compact">Técnico *</label>
+            <select id="technicianId" class="form-control-compact" required>
+              <option value="">Selecione...</option>
+            </select>
           </div>
 
-          <button type="button" class="btn btn-secondary" onclick="addItemRow()" style="width: 100%;">
-            <span style="font-size: 18px; margin-right: 5px;">+</span> Adicionar Produto
-          </button>
-        </div>
+          <div class="form-group-compact">
+            <label class="form-label-compact">
+              Produtos * <small style="color: #64748b;">(mínimo 1)</small>
+              <span id="itemCounter" style="float: right; font-size: 12px; color: #64748b; font-weight: 400;">0 produto(s)</span>
+            </label>
+            <div id="itemsList"></div>
+            <button type="button" class="btn btn-secondary" onclick="addItemRow()" style="width: 100%; margin-top: 10px;">
+              + Adicionar Produto
+            </button>
+          </div>
 
-        <div class="form-group">
-          <label class="form-label">Observações</label>
-          <textarea id="note" class="form-control" rows="3" placeholder="Informações adicionais sobre a transferência..."></textarea>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="hideNewTransferModal()">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="submitTransferBtn">Criar Transferência</button>
-        </div>
-      </form>
+          <div class="form-group-compact">
+            <label class="form-label-compact">Observações</label>
+            <textarea id="note" class="form-control-compact" rows="3" placeholder="Informações adicionais..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-compact">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('newTransferModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" onclick="submitTransfer()">Criar</button>
+      </div>
     </div>
   </div>
 
-  <!-- Modal: Detalhes da Transferência -->
+  <!-- Modal: Detalhes -->
   <div id="detailModal" class="modal">
-    <div class="modal-content modal-large detail-modal">
+    <div class="modal-content modal-compact">
       <div class="modal-header">
         <h3 id="detailTitle">Transferência</h3>
-        <span class="close" onclick="hideDetailModal()">&times;</span>
+        <span class="close" onclick="hideModal('detailModal')">&times;</span>
       </div>
-      <div id="detailContent"></div>
+      <div class="modal-body" id="detailContent"></div>
     </div>
   </div>
 
-  <!-- Modal: Marcar Item como Usado -->
+  <!-- Modal: Marcar Usado -->
   <div id="useModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
-        <h3>Marcar Item como Usado</h3>
-        <span class="close" onclick="hideUseModal()">&times;</span>
+        <h3>Marcar como Usado</h3>
+        <span class="close" onclick="hideModal('useModal')">&times;</span>
       </div>
-      <form id="useForm">
-        <input type="hidden" id="useItemId">
-        <div class="form-group">
-          <label class="form-label">Código do Cliente IXC</label>
-          <input type="text" id="ixcClientCode" class="form-control" placeholder="Ex: 12345">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Observações de Uso</label>
-          <textarea id="usageNote" class="form-control" rows="3" placeholder="Detalhes da instalação..."></textarea>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="hideUseModal()">Cancelar</button>
-          <button type="submit" class="btn btn-success">Confirmar Uso</button>
-        </div>
-      </form>
+      <div class="modal-body">
+        <form id="useForm">
+          <input type="hidden" id="useItemId">
+          <div class="form-group-compact">
+            <label class="form-label-compact">Código Cliente IXC</label>
+            <input type="text" id="ixcClientCode" class="form-control-compact" placeholder="Ex: 12345">
+          </div>
+          <div class="form-group-compact">
+            <label class="form-label-compact">Observações</label>
+            <textarea id="usageNote" class="form-control-compact" rows="2" placeholder="Detalhes..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-compact">
+        <button class="btn btn-secondary" onclick="hideModal('useModal')">Cancelar</button>
+        <button class="btn btn-success" onclick="submitUse()">Confirmar</button>
+      </div>
     </div>
   </div>
 
+  <script src="/js/menu.js"></script>
   <script src="/js/auth.js"></script>
   <script>
     let transfers = [];
     let technicians = [];
     let products = [];
-    let warehouses = [];
     let currentFilter = 'all';
     let itemCounter = 0;
     let currentTransferId = null;
 
     const STATUS_MAP = {
-      PENDING: { label: '📦 Saída do Estoque', color: 'secondary', icon: '📦' },
-      IN_HANDS: { label: '🚚 Em Mãos', color: 'warning', icon: '🚚' },
-      PARTIALLY_USED: { label: '⚡ Em Uso', color: 'info', icon: '⚡' },
-      USED: { label: '✅ Finalizado', color: 'success', icon: '✅' },
-      PARTIALLY_RETURNED: { label: '↩️ Devolvendo', color: 'info', icon: '↩️' },
-      RETURNED: { label: '✅ Devolvido', color: 'primary', icon: '✅' },
-      CANCELED: { label: '❌ Cancelado', color: 'danger', icon: '❌' }
+      PENDING: { label: '📦 Saída do Estoque', color: 'secondary' },
+      IN_HANDS: { label: '🚚 Em Mãos', color: 'warning' },
+      PARTIALLY_USED: { label: '⚡ Em Uso', color: 'info' },
+      USED: { label: '✅ Finalizado', color: 'success' },
+      PARTIALLY_RETURNED: { label: '↩️ Devolvendo', color: 'info' },
+      RETURNED: { label: '✅ Devolvido', color: 'primary' },
+      CANCELED: { label: '❌ Cancelado', color: 'danger' }
     };
 
     const ITEM_STATUS_MAP = {
@@ -736,6 +714,7 @@
 
         populateTechnicians();
         renderTransfers();
+        updateFilterCounts();
       } catch (e) {
         console.error(e);
         document.getElementById('content').innerHTML = '<p style="text-align: center; color: var(--danger); padding: 20px;">Erro ao carregar dados</p>';
@@ -758,213 +737,281 @@
     }
 
     function updateFilterCounts() {
-      document.getElementById('count-all').textContent = transfers.length;
+      const activeTransfers = transfers.filter(t => t.status !== 'CANCELED');
+      document.getElementById('count-all').textContent = activeTransfers.length;
       document.getElementById('count-warehouse').textContent = transfers.filter(t => t.status === 'PENDING').length;
       document.getElementById('count-in_hands').textContent = transfers.filter(t => ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(t.status)).length;
       document.getElementById('count-finished').textContent = transfers.filter(t => ['USED', 'RETURNED'].includes(t.status)).length;
+      document.getElementById('count-canceled').textContent = transfers.filter(t => t.status === 'CANCELED').length;
     }
 
     function filterTransfers() {
-      if (currentFilter === 'all') return transfers;
+      let filtered = [];
 
-      // Saída do Estoque - Aguardando sair do almoxarifado
-      if (currentFilter === 'warehouse') {
-        return transfers.filter(t => t.status === 'PENDING');
+      if (currentFilter === 'all') filtered = transfers.filter(t => t.status !== 'CANCELED');
+      else if (currentFilter === 'warehouse') filtered = transfers.filter(t => t.status === 'PENDING');
+      else if (currentFilter === 'in_hands') filtered = transfers.filter(t => ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(t.status));
+      else if (currentFilter === 'finished') filtered = transfers.filter(t => ['USED', 'RETURNED'].includes(t.status));
+      else if (currentFilter === 'canceled') {
+        filtered = transfers.filter(t => t.status === 'CANCELED');
+
+        // Aplicar filtro de data se estiver preenchido
+        const dateFrom = document.getElementById('dateFrom')?.value;
+        const dateTo = document.getElementById('dateTo')?.value;
+
+        if (dateFrom || dateTo) {
+          filtered = filtered.filter(t => {
+            const canceledDate = new Date(t.canceledAt || t.updatedAt);
+            const from = dateFrom ? new Date(dateFrom + 'T00:00:00') : null;
+            const to = dateTo ? new Date(dateTo + 'T23:59:59') : null;
+
+            if (from && canceledDate < from) return false;
+            if (to && canceledDate > to) return false;
+            return true;
+          });
+        }
       }
+      else filtered = transfers;
 
-      // Em Mãos - Técnico está com os produtos (pode estar usando parcialmente)
-      if (currentFilter === 'in_hands') {
-        return transfers.filter(t => ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(t.status));
-      }
-
-      // Finalizado - Processo concluído (todos itens usados ou devolvidos)
-      if (currentFilter === 'finished') {
-        return transfers.filter(t => ['USED', 'RETURNED'].includes(t.status));
-      }
-
-      return transfers.filter(t => t.status === currentFilter);
+      return filtered;
     }
 
     function renderTransfers() {
       const filtered = filterTransfers();
       const content = document.getElementById('content');
 
+      // Mostrar/ocultar filtro de data
+      const dateFilter = document.getElementById('dateFilter');
+      if (currentFilter === 'canceled') {
+        dateFilter.style.display = 'block';
+      } else {
+        dateFilter.style.display = 'none';
+      }
+
       if (!filtered.length) {
-        content.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px;">Nenhuma transferência encontrada</p>';
+        content.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">Nenhuma transferência encontrada</p>';
         return;
       }
 
-      content.innerHTML = `<div class="transfers-grid">${filtered.map(renderTransferCard).join('')}</div>`;
-
-      // Atualizar timers imediatamente após renderizar
-      setTimeout(updateTimers, 0);
+      // Renderizar lista para cancelados, cards para os outros
+      if (currentFilter === 'canceled') {
+        content.innerHTML = renderCanceledList(filtered);
+      } else {
+        content.innerHTML = `<div class="transfers-grid">${filtered.map(renderCard).join('')}</div>`;
+        setTimeout(updateTimers, 0);
+      }
     }
 
-    function renderTransferCard(transfer) {
-      const status = STATUS_MAP[transfer.status];
-      const totalCount = transfer.items.length;
+    function clearDateFilter() {
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      renderTransfers();
+    }
 
-      // Contar itens por status
-      const pendingCount = transfer.items.filter(i => i.status === 'PENDING').length;
-      const inHandsCount = transfer.items.filter(i => i.status === 'IN_HANDS').length;
-      const usedCount = transfer.items.filter(i => i.status === 'USED').length;
-      const returnedCount = transfer.items.filter(i => i.status === 'RETURNED').length;
-
-      // Calcular progresso em duas fases:
-      // Fase 1 (50%): Item saiu do estoque (IN_HANDS)
-      // Fase 2 (100%): Item foi usado ou retornado (USED/RETURNED)
-      const phase1Progress = (inHandsCount * 50) / totalCount; // 50% por item em mãos
-      const phase2Progress = ((usedCount + returnedCount) * 100) / totalCount; // 100% por item finalizado
-      const progressPercent = phase1Progress + phase2Progress;
-
-      const isPulsing = ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(transfer.status);
-
-      // Calcular tempo em mãos
-      let timeInHands = '';
-      if (transfer.transferredAt && ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(transfer.status)) {
-        const now = new Date();
-        const transferDate = new Date(transfer.transferredAt);
-        const diffMs = now - transferDate;
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffDays > 0) {
-          timeInHands = `${diffDays} dia(s)`;
-        } else if (diffHours > 0) {
-          timeInHands = `${diffHours} hora(s)`;
-        } else {
-          timeInHands = 'Menos de 1 hora';
-        }
-      }
+    function renderCanceledList(canceledTransfers) {
+      // Ordenar por data de cancelamento (mais recente primeiro)
+      const sorted = canceledTransfers.sort((a, b) => {
+        const dateA = new Date(a.canceledAt || a.updatedAt);
+        const dateB = new Date(b.canceledAt || b.updatedAt);
+        return dateB - dateA;
+      });
 
       return `
-        <div class="transfer-card ${isPulsing ? 'pulsing-card' : ''}">
-          <div class="transfer-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px;">
-                📦
-              </div>
-              <div>
-                <div class="transfer-number" style="font-size: 14px; margin-bottom: 1px;">${transfer.number}</div>
-                <div style="font-size: 9px; color: #64748b; font-weight: 500;">SAÍDA DO ESTOQUE</div>
-              </div>
-            </div>
-            <span class="badge badge-${status.color}" style="font-size: 10px; padding: 4px 10px; border-radius: 16px;">${status.label}</span>
+        <div style="background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+          <!-- Cabeçalho da Tabela -->
+          <div style="display: grid; grid-template-columns: 140px 1fr 200px 180px 180px; gap: 12px; padding: 12px 16px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 700; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div>Código</div>
+            <div>Técnico</div>
+            <div>Criado Em</div>
+            <div>Cancelado Em</div>
+            <div style="text-align: center;">Ações</div>
           </div>
 
-          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: rgba(15, 23, 42, 0.4); border-radius: 6px;">
-              <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #ec4899, #f43f5e); display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                👤
-              </div>
-              <div>
-                <div style="font-size: 9px; color: #64748b; margin-bottom: 1px;">Técnico</div>
-                <div style="font-size: 12px; color: #e2e8f0; font-weight: 600;">${transfer.technician.name}</div>
-              </div>
-            </div>
+          <!-- Linhas da Tabela -->
+          ${sorted.map(t => {
+            const canceledDate = new Date(t.canceledAt || t.updatedAt);
+            const createdDate = new Date(t.createdAt);
 
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: rgba(15, 23, 42, 0.4); border-radius: 6px;">
-              <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #06b6d4, #0891b2); display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                📅
-              </div>
-              <div>
-                <div style="font-size: 9px; color: #64748b; margin-bottom: 1px;">Criado em</div>
-                <div style="font-size: 12px; color: #e2e8f0; font-weight: 600;">${new Date(transfer.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-              </div>
-            </div>
+            return `
+              <div style="display: grid; grid-template-columns: 140px 1fr 200px 180px 180px; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; background: rgba(0,0,0,0.1);" onmouseover="this.style.background='rgba(0,0,0,0.25)'" onmouseout="this.style.background='rgba(0,0,0,0.1)'">
+                <!-- Código -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; color: #ef4444;">
+                    ${t.number}
+                  </div>
+                </div>
 
-            ${transfer.transferredAt ? `
-              <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: rgba(15, 23, 42, 0.4); border-radius: 6px;">
-                <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                  🚚
+                <!-- Técnico -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="background: rgba(236, 72, 153, 0.2); padding: 6px; border-radius: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600; color: #e2e8f0;">${t.technician.name}</div>
+                    <div style="font-size: 11px; color: #64748b;">${t.items.length} ${t.items.length === 1 ? 'item' : 'itens'}</div>
+                  </div>
                 </div>
-                <div>
-                  <div style="font-size: 9px; color: #64748b; margin-bottom: 1px;">Saída</div>
-                  <div style="font-size: 12px; color: #e2e8f0; font-weight: 600;">${new Date(transfer.transferredAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+
+                <!-- Criado Em -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="background: rgba(6, 182, 212, 0.2); padding: 6px; border-radius: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 12px; font-weight: 600; color: #e2e8f0;">${createdDate.toLocaleDateString('pt-BR')}</div>
+                    <div style="font-size: 11px; color: #64748b;">${createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                </div>
+
+                <!-- Cancelado Em -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="background: rgba(239, 68, 68, 0.2); padding: 6px; border-radius: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 12px; font-weight: 600; color: #ef4444;">${canceledDate.toLocaleDateString('pt-BR')}</div>
+                    <div style="font-size: 11px; color: #64748b;">${canceledDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                </div>
+
+                <!-- Ações -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                  <button onclick="viewTransfer(${t.id})" style="padding: 6px 12px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; color: #3b82f6; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.2)'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Ver
+                  </button>
+                  <button onclick="deleteTransfer(${t.id}, '${t.number}')" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; color: #ef4444; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Apagar
+                  </button>
                 </div>
               </div>
-            ` : ''}
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderCard(t) {
+      const status = STATUS_MAP[t.status];
+      const total = t.items.length;
+      const inHands = t.items.filter(i => i.status === 'IN_HANDS').length;
+      const used = t.items.filter(i => i.status === 'USED').length;
+      const returned = t.items.filter(i => i.status === 'RETURNED').length;
+      const progress = ((inHands * 50 + (used + returned) * 100) / total);
+      const showTimer = ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(t.status);
+
+      return `
+        <div class="transfer-card">
+          <div class="card-header-flex">
+            <span class="transfer-number">${t.number}</span>
+            <span class="badge badge-${status.color}">${status.label}</span>
           </div>
 
-          ${transfer.transferredAt && ['IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED'].includes(transfer.status) ? `
-            <div style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e293b; padding: 10px; border-radius: 8px; margin: 12px 0; text-align: center; font-weight: 700; font-size: 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4); animation: pulse 2s ease-in-out infinite;">
-              <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                <span class="clock-icon" style="font-size: 18px;">⏰</span>
-                <span style="font-size: 12px;">EM MÃOS HÁ</span>
-              </div>
-              <div id="timer-${transfer.id}" style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" data-transferred-at="${transfer.transferredAt}">
-                Calculando...
-              </div>
-              <div style="font-size: 9px; opacity: 0.8; font-weight: 600;">
-                Desde ${new Date(transfer.transferredAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          <div class="info-box">
+            <div class="info-box-icon" style="background: #ec4899;">
+              <span style="font-size: 11px;">👤</span>
+            </div>
+            <div>
+              <div class="info-label">Técnico</div>
+              <div class="info-value">${t.technician.name}</div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-box-icon" style="background: #06b6d4;">
+              <span style="font-size: 11px;">📅</span>
+            </div>
+            <div>
+              <div class="info-label">Criado</div>
+              <div class="info-value">${new Date(t.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          </div>
+
+          ${showTimer && t.transferredAt ? `
+            <div class="timer-box">
+              <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.5px; position: relative; z-index: 1;">EM MÃOS HÁ</div>
+              <div style="display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; position: relative; z-index: 1; margin-top: 4px;">
+                <svg class="timer-clock" style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
+                </svg>
+                <span id="timer-${t.id}" data-transferred-at="${t.transferredAt}">...</span>
               </div>
             </div>
           ` : ''}
 
           <div class="progress-container">
             <div class="progress-label">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                ${isPulsing ? '<span style="font-size: 16px;">⚡</span>' : '<span style="font-size: 16px;">📊</span>'}
-                <strong>Progresso</strong>
-              </span>
-              <span style="background: rgba(148, 163, 184, 0.2); padding: 6px 12px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                ${inHandsCount > 0 ? `<span style="color: #fbbf24;">🚚 ${inHandsCount}</span>` : ''}
-                ${(usedCount + returnedCount) > 0 ? `<span style="color: #10b981;">✓ ${usedCount + returnedCount}</span>` : ''}
-                ${pendingCount > 0 ? `<span style="color: #94a3b8;">⏸ ${pendingCount}</span>` : ''}
-                <span style="margin-left: 4px; color: #e2e8f0;">(${Math.round(progressPercent)}%)</span>
-              </span>
+              <span>Progresso</span>
+              <span>${Math.round(progress)}%</span>
             </div>
-            <div class="progress-bar-track" style="position: relative;">
-              <div class="progress-bar-fill ${isPulsing ? 'pulsing' : ''}" style="width: ${progressPercent}%; position: relative;">
-                <span style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 900; color: #1e293b; text-shadow: 0 1px 3px rgba(255,255,255,0.8); ${progressPercent < 15 ? 'display: none;' : ''}">${Math.round(progressPercent)}%</span>
-              </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%"></div>
             </div>
           </div>
 
-          <div style="margin-top: 12px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-              <span style="font-size: 14px;">📦</span>
-              <span style="font-size: 11px; font-weight: 700; color: #94a3b8;">ITENS DA SAÍDA</span>
-              <span style="margin-left: auto; background: rgba(148, 163, 184, 0.15); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; color: #94a3b8;">${transfer.items.length}</span>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
-              ${transfer.items.map(item => {
-                const itemStatus = ITEM_STATUS_MAP[item.status];
-                return `
-                  <div style="display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border-left: 2px solid ${itemStatus.color === 'success' ? '#10b981' : itemStatus.color === 'warning' ? '#fbbf24' : itemStatus.color === 'danger' ? '#ef4444' : '#3b82f6'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <div style="flex: 1;">
-                        <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; margin-bottom: 2px;">${item.product.name}</div>
-                        ${item.serialNumber ? `<div style="font-size: 10px; color: #64748b; font-family: monospace;">🔢 ${item.serialNumber}</div>` : ''}
-                        ${item.macAddress ? `<div style="font-size: 10px; color: #64748b; font-family: monospace;">🌐 ${item.macAddress}</div>` : ''}
-                      </div>
-                      <span class="badge badge-${itemStatus.color}" style="font-size: 9px; padding: 4px 8px; border-radius: 10px; white-space: nowrap;">${itemStatus.label}</span>
-                    </div>
-                    ${item.status === 'IN_HANDS' ? `
-                      <div style="display: flex; gap: 4px; margin-top: 2px;">
-                        <button onclick="showUseModal(${item.id})" style="flex: 1; padding: 5px 10px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; border-radius: 5px; font-weight: 600; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                          ✓ Utilizado
-                        </button>
-                        <button onclick="markItemReturned(${transfer.id}, ${item.id})" style="flex: 1; padding: 5px 10px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; border-radius: 5px; font-weight: 600; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                          ↩️ Devolver
-                        </button>
-                      </div>
-                    ` : ''}
+          <div class="items-compact">
+            ${t.items.map(item => `
+              <div class="item-compact ${item.status === 'USED' ? 'used' : item.status === 'IN_HANDS' ? 'in-hands' : ''}">
+                <div class="item-name">${item.product.name}</div>
+                ${item.serialNumber ? `<div class="item-meta">SN: ${item.serialNumber}</div>` : ''}
+                ${item.status === 'IN_HANDS' ? `
+                  <div class="item-actions">
+                    <button onclick="showUseModal(${t.id}, ${item.id})" class="btn-item btn-success-grad">
+                      <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Usado
+                    </button>
+                    <button onclick="markItemReturned(${t.id}, ${item.id})" class="btn-item btn-info-grad">
+                      <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                      </svg>
+                      Devolver
+                    </button>
                   </div>
-                `;
-              }).join('')}
-            </div>
+                ` : ''}
+              </div>
+            `).join('')}
           </div>
 
-          <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <button onclick="viewTransfer(${transfer.id})" style="flex: 1; min-width: 120px; padding: 8px 16px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.3)'">
-              <span style="font-size: 14px;">👁️</span>
-              Ver Detalhes
+          <div class="btn-group">
+            <button onclick="viewTransfer(${t.id})" class="btn-compact btn-info-grad">
+              <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Detalhes
             </button>
-            ${transfer.status === 'PENDING' ? `
-              <button onclick="markAsTransferred(${transfer.id})" style="flex: 1; min-width: 120px; padding: 8px 16px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.3)'">
-                <span style="font-size: 14px;">🚚</span>
-                Saiu do Estoque
+            ${t.status === 'PENDING' ? `
+              <button onclick="markAsTransferred(${t.id})" class="btn-compact btn-success-grad">
+                <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Saiu
+              </button>
+              <button onclick="cancelTransfer(${t.id})" class="btn-compact btn-danger-grad" title="Cancelar esta saída">
+                <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Cancelar
+              </button>
+            ` : ''}
+            ${['IN_HANDS', 'PARTIALLY_USED', 'USED', 'PARTIALLY_RETURNED'].includes(t.status) ? `
+              <button onclick="revertTransfer(${t.id})" class="btn-compact btn-warning-grad" title="Reverter transferência e devolver ao estoque">
+                <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                </svg>
+                Reverter
               </button>
             ` : ''}
           </div>
@@ -973,119 +1020,72 @@
     }
 
     function updateTimers() {
-      // Atualizar todos os timers em tempo real
       document.querySelectorAll('[id^="timer-"]').forEach(timer => {
         const transferredAt = timer.getAttribute('data-transferred-at');
         if (!transferredAt) return;
 
-        const now = new Date();
-        const transferDate = new Date(transferredAt);
-        const diffMs = now - transferDate;
+        const diff = Date.now() - new Date(transferredAt);
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
 
-        const diffSeconds = Math.floor(diffMs / 1000);
-        const diffMinutes = Math.floor(diffSeconds / 60);
-        const diffHours = Math.floor(diffMinutes / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        let timeText = '';
-        if (diffDays > 0) {
-          const hours = diffHours % 24;
-          timeText = `${diffDays}d ${hours}h`;
-        } else if (diffHours > 0) {
-          const minutes = diffMinutes % 60;
-          timeText = `${diffHours}h ${minutes}m`;
-        } else if (diffMinutes > 0) {
-          const seconds = diffSeconds % 60;
-          timeText = `${diffMinutes}m ${seconds}s`;
+        if (days > 0) {
+          timer.textContent = `${days}d ${hours}h ${mins}m`;
+        } else if (hours > 0) {
+          timer.textContent = `${hours}h ${mins}m ${secs}s`;
+        } else if (mins > 0) {
+          timer.textContent = `${mins}m ${secs}s`;
         } else {
-          timeText = `${diffSeconds}s`;
+          timer.textContent = `${secs}s`;
         }
-
-        timer.textContent = timeText;
       });
     }
 
-    // Atualizar timers a cada segundo
+    // Atualizar a cada segundo
     setInterval(updateTimers, 1000);
 
     function showNewTransferModal() {
-      document.getElementById('newTransferForm').reset();
       document.getElementById('itemsList').innerHTML = '';
       itemCounter = 0;
-      document.getElementById('emptyItemsMessage').style.display = 'block';
       updateItemCounter();
-      document.getElementById('newTransferModal').style.display = 'block';
-    }
-
-    function hideNewTransferModal() {
-      document.getElementById('newTransferModal').style.display = 'none';
+      showModal('newTransferModal');
     }
 
     function addItemRow() {
       itemCounter++;
       const div = document.createElement('div');
       div.id = `itemRow${itemCounter}`;
-      div.className = 'add-item-row';
+      div.className = 'item-row';
       div.innerHTML = `
         <div class="item-row-header">
-          <span class="item-row-number">Produto #${itemCounter}</span>
-          <button type="button" class="remove-item-btn" onclick="removeItemRow(${itemCounter})" title="Remover produto">×</button>
+          <span style="font-weight: 600; color: var(--primary);">Produto #${itemCounter}</span>
+          <button type="button" class="remove-btn" onclick="removeItemRow(${itemCounter})">×</button>
         </div>
-
-        <div class="item-row-fields">
-          <div class="search-box full-width">
-            <input type="text" class="form-control product-search" placeholder="🔍 Buscar por Serial Number, MAC ou nome do produto..." onkeyup="searchProduct(${itemCounter}, this.value)" onfocus="this.select()">
-            <div id="searchResults${itemCounter}" class="product-search-results"></div>
-            <input type="hidden" class="product-id" required>
-            <input type="hidden" class="instance-id">
-            <input type="hidden" class="serial-number">
-            <input type="hidden" class="mac-address">
-            <div class="selected-product-display" id="selectedProduct${itemCounter}" style="display: none; margin-top: 8px; padding: 8px; background: var(--background); border-radius: 4px; font-size: 13px; position: relative; padding-right: 35px;">
-              <button type="button" onclick="clearProductSelection(${itemCounter})" style="position: absolute; top: 4px; right: 4px; background: var(--danger); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Limpar seleção">×</button>
-            </div>
-          </div>
-
-          <div class="full-width">
-            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Quantidade *</label>
-            <input type="number" class="form-control quantity" placeholder="Ex: 1" min="0.01" step="0.01" value="1" required>
-          </div>
+        <div style="position: relative;">
+          <input type="text" class="form-control-compact product-search" placeholder="🔍 Buscar produto..." onkeyup="searchProduct(${itemCounter}, this.value)">
+          <div id="searchResults${itemCounter}" class="search-results"></div>
+          <input type="hidden" class="product-id" required>
+          <input type="hidden" class="instance-id">
+          <div id="selectedProduct${itemCounter}" class="selected-product" style="display: none;"></div>
+        </div>
+        <div style="margin-top: 10px;">
+          <label class="form-label-compact">Quantidade *</label>
+          <input type="number" class="form-control-compact quantity" value="1" min="0.01" step="0.01" required>
         </div>
       `;
       document.getElementById('itemsList').appendChild(div);
-      document.getElementById('emptyItemsMessage').style.display = 'none';
       updateItemCounter();
     }
 
     function removeItemRow(id) {
-      const row = document.getElementById(`itemRow${id}`);
-      row.style.animation = 'slideOut 0.3s ease-out';
-      setTimeout(() => {
-        row.remove();
-        updateItemCounter();
-
-        // Show empty message if no items
-        const itemsList = document.getElementById('itemsList');
-        if (itemsList.children.length === 0) {
-          document.getElementById('emptyItemsMessage').style.display = 'block';
-        }
-      }, 300);
+      document.getElementById(`itemRow${id}`).remove();
+      updateItemCounter();
     }
 
     function updateItemCounter() {
       const count = document.getElementById('itemsList').children.length;
-      document.getElementById('itemCounter').textContent = `${count} produto(s) adicionado(s)`;
-
-      // Enable/disable submit button based on items
-      const submitBtn = document.getElementById('submitTransferBtn');
-      if (count === 0) {
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
-        submitBtn.style.cursor = 'not-allowed';
-      } else {
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-      }
+      document.getElementById('itemCounter').textContent = `${count} produto(s)`;
     }
 
     let searchTimeout;
@@ -1100,249 +1100,146 @@
 
       searchTimeout = setTimeout(async () => {
         try {
-          // Search by serial/MAC
           const res = await fetch(`/transfers/search-product?q=${encodeURIComponent(query)}`, { credentials: 'include' });
           const instances = await res.json();
-
-          // Also search products by name (only those WITHOUT serial tracking)
           const matchingProds = products.filter(p =>
-            (p.name.toLowerCase().includes(query.toLowerCase()) ||
-             p.sku.toLowerCase().includes(query.toLowerCase())) &&
-            !p.trackSerial  // Excluir produtos com rastreamento (estes devem aparecer apenas como instâncias)
+            (p.name.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase())) && !p.trackSerial
           );
 
           resultsDiv.innerHTML = '';
 
-          // Show product instances first (with serial/MAC)
           if (instances.length > 0) {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'search-result-category';
-            categoryDiv.innerHTML = '📦 Produtos com Serial/MAC';
-            resultsDiv.appendChild(categoryDiv);
-
             instances.forEach(inst => {
               const div = document.createElement('div');
-              div.className = 'search-result-item';
+              div.className = 'search-item';
               div.innerHTML = `
-                <span class="search-result-title">${inst.product.name}</span>
-                <span class="search-result-details">
-                  ${inst.serialNumber ? `SN: ${inst.serialNumber}` : 'Sem SN'}
-                  ${inst.macAddress ? ` • MAC: ${inst.macAddress}` : ''}
-                </span>
+                <div class="search-title">${inst.product.name}</div>
+                <div class="search-meta">SN: ${inst.serialNumber || 'N/A'} ${inst.macAddress ? '• MAC: ' + inst.macAddress : ''}</div>
               `;
               div.onclick = () => selectProductInstance(rowId, inst);
               resultsDiv.appendChild(div);
             });
           }
 
-          // Show matching products (without specific serial/MAC)
           if (matchingProds.length > 0) {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'search-result-category';
-            categoryDiv.innerHTML = '📋 Produtos (Sem Rastreamento)';
-            resultsDiv.appendChild(categoryDiv);
-
             matchingProds.slice(0, 5).forEach(prod => {
               const div = document.createElement('div');
-              div.className = 'search-result-item';
+              div.className = 'search-item';
               div.innerHTML = `
-                <span class="search-result-title">${prod.name}</span>
-                <span class="search-result-details">SKU: ${prod.sku} • Sem rastreamento</span>
+                <div class="search-title">${prod.name}</div>
+                <div class="search-meta">SKU: ${prod.sku}</div>
               `;
               div.onclick = () => selectProduct(rowId, prod);
               resultsDiv.appendChild(div);
             });
           }
 
-          if (instances.length === 0 && matchingProds.length === 0) {
-            resultsDiv.innerHTML = `
-              <div class="search-result-empty">
-                <div class="search-result-empty-icon">🔍</div>
-                <div>Nenhum resultado encontrado</div>
-                <div style="font-size: 11px; margin-top: 5px; color: #555;">Tente buscar por nome, SKU, SN ou MAC</div>
-              </div>
-            `;
+          if (!instances.length && !matchingProds.length) {
+            resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Nenhum resultado</div>';
           }
 
           resultsDiv.classList.add('active');
         } catch (e) {
           console.error(e);
-          resultsDiv.innerHTML = `
-            <div class="search-result-empty">
-              <div class="search-result-empty-icon">❌</div>
-              <div style="color: var(--danger);">Erro ao buscar produtos</div>
-              <div style="font-size: 11px; margin-top: 5px; color: #555;">Tente novamente</div>
-            </div>
-          `;
-          resultsDiv.classList.add('active');
         }
       }, 300);
     }
 
-    function selectProductInstance(rowId, instance) {
+    function selectProductInstance(rowId, inst) {
       const row = document.getElementById(`itemRow${rowId}`);
-      const searchInput = row.querySelector('.product-search');
-      searchInput.value = '';
-      searchInput.classList.add('has-value');
-      row.querySelector('.product-id').value = instance.productId;
-      row.querySelector('.instance-id').value = instance.id;
-      row.querySelector('.serial-number').value = instance.serialNumber || '';
-      row.querySelector('.mac-address').value = instance.macAddress || '';
+      row.querySelector('.product-id').value = inst.productId;
+      row.querySelector('.instance-id').value = inst.id;
+      row.querySelector('.product-search').value = '';
 
-      // Show selected product
-      const display = document.getElementById(`selectedProduct${rowId}`);
-      display.innerHTML = `
-        <strong style="color: var(--success);">✓ ${instance.product.name}</strong><br>
-        <small>SN: ${instance.serialNumber || 'N/A'} | MAC: ${instance.macAddress || 'N/A'}</small>
-        <button type="button" onclick="clearProductSelection(${rowId})" style="position: absolute; top: 4px; right: 4px; background: var(--danger); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Limpar seleção">×</button>
+      // Armazenar dados da instância nos atributos data-*
+      row.setAttribute('data-serial', inst.serialNumber || '');
+      row.setAttribute('data-mac', inst.macAddress || '');
+      row.setAttribute('data-invoice', inst.invoiceNumber || '');
+
+      document.getElementById(`selectedProduct${rowId}`).innerHTML = `
+        <strong style="color: #10b981;">✓ ${inst.product.name}</strong><br>
+        <small>SN: ${inst.serialNumber || 'N/A'}</small>
       `;
-      display.style.display = 'block';
-
+      document.getElementById(`selectedProduct${rowId}`).style.display = 'block';
       document.getElementById(`searchResults${rowId}`).classList.remove('active');
     }
 
-    function selectProduct(rowId, product) {
+    function selectProduct(rowId, prod) {
       const row = document.getElementById(`itemRow${rowId}`);
-      const searchInput = row.querySelector('.product-search');
-      searchInput.value = '';
-      searchInput.classList.add('has-value');
-      row.querySelector('.product-id').value = product.id;
-      row.querySelector('.instance-id').value = '';
+      row.querySelector('.product-id').value = prod.id;
+      row.querySelector('.product-search').value = '';
 
-      // Show selected product
-      const display = document.getElementById(`selectedProduct${rowId}`);
-      display.innerHTML = `
-        <strong style="color: var(--success);">✓ ${product.name}</strong><br>
-        <small>SKU: ${product.sku}</small>
-        <button type="button" onclick="clearProductSelection(${rowId})" style="position: absolute; top: 4px; right: 4px; background: var(--danger); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Limpar seleção">×</button>
+      document.getElementById(`selectedProduct${rowId}`).innerHTML = `
+        <strong style="color: #10b981;">✓ ${prod.name}</strong><br>
+        <small>SKU: ${prod.sku}</small>
       `;
-      display.style.display = 'block';
-
+      document.getElementById(`selectedProduct${rowId}`).style.display = 'block';
       document.getElementById(`searchResults${rowId}`).classList.remove('active');
     }
 
-    function clearProductSelection(rowId) {
-      const row = document.getElementById(`itemRow${rowId}`);
-      const searchInput = row.querySelector('.product-search');
-      searchInput.value = '';
-      searchInput.classList.remove('has-value');
-      row.querySelector('.product-id').value = '';
-      row.querySelector('.instance-id').value = '';
-      row.querySelector('.serial-number').value = '';
-      row.querySelector('.mac-address').value = '';
+    async function submitTransfer() {
+      const techId = parseInt(document.getElementById('technicianId').value);
+      if (!techId) return alert('Selecione um técnico');
 
-      document.getElementById(`selectedProduct${rowId}`).style.display = 'none';
-      searchInput.focus();
-    }
+      const tech = technicians.find(t => t.id === techId);
+      if (!tech?.warehouse) return alert('Técnico sem almoxarifado');
 
-    document.getElementById('newTransferForm').onsubmit = async (e) => {
-      e.preventDefault();
+      const rows = document.querySelectorAll('[id^="itemRow"]');
+      const items = [];
 
-      const submitBtn = document.getElementById('submitTransferBtn');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading" style="width: 16px; height: 16px; border-width: 2px;"></span> Criando...';
+      rows.forEach(row => {
+        const productId = parseInt(row.querySelector('.product-id').value);
+        const instanceId = row.querySelector('.instance-id').value;
+        const quantity = parseFloat(row.querySelector('.quantity').value);
+
+        // Ler dados da instância dos atributos data-*
+        const serialNumber = row.getAttribute('data-serial');
+        const macAddress = row.getAttribute('data-mac');
+        const invoiceNumber = row.getAttribute('data-invoice');
+
+        if (productId && quantity > 0) {
+          items.push({
+            productId,
+            productInstanceId: instanceId ? parseInt(instanceId) : undefined,
+            serialNumber: serialNumber || undefined,
+            macAddress: macAddress || undefined,
+            invoiceNumber: invoiceNumber || undefined,
+            quantity
+          });
+        }
+      });
+
+      if (!items.length) return alert('Adicione pelo menos um produto');
 
       try {
-        const techId = parseInt(document.getElementById('technicianId').value);
-
-        if (!techId) {
-          showAlert('Selecione um técnico', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-          return;
-        }
-
-        const tech = technicians.find(t => t.id === techId);
-
-        if (!tech) {
-          showAlert('Técnico não encontrado', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-          return;
-        }
-
-        if (!tech.warehouse) {
-          showAlert('Técnico não possui almoxarifado associado. Configure o almoxarifado do técnico antes de criar transferências.', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-          return;
-        }
-
-        const rows = document.querySelectorAll('[id^="itemRow"]');
-        const items = [];
-
-        rows.forEach(row => {
-          const productId = parseInt(row.querySelector('.product-id').value);
-          const instanceId = row.querySelector('.instance-id').value;
-          const serialNumber = row.querySelector('.serial-number').value;
-          const macAddress = row.querySelector('.mac-address').value;
-          const quantity = parseFloat(row.querySelector('.quantity').value);
-
-          if (productId && quantity > 0) {
-            items.push({
-              productId,
-              productInstanceId: instanceId ? parseInt(instanceId) : undefined,
-              serialNumber: serialNumber || undefined,
-              macAddress: macAddress || undefined,
-              quantity
-            });
-          }
-        });
-
-        if (items.length === 0) {
-          showAlert('Adicione pelo menos um produto', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-          return;
-        }
-
-        const payload = {
-          fromWarehouseId: 1, // Almoxarifado principal
-          toWarehouseId: tech.warehouse.id,
-          technicianId: techId,
-          items,
-          note: document.getElementById('note').value || undefined
-        };
-
-        console.log('Enviando transferência:', payload);
-
         const res = await fetch('/transfers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            fromWarehouseId: 1,
+            toWarehouseId: tech.warehouse.id,
+            technicianId: techId,
+            items,
+            note: document.getElementById('note').value || undefined
+          })
         });
 
         if (res.ok) {
-          showAlert('Transferência criada com sucesso!', 'success');
-          hideNewTransferModal();
+          showAlert('Transferência criada!', 'success');
+          hideModal('newTransferModal');
           loadData();
         } else {
-          let errorMessage = 'Erro ao criar transferência';
-          try {
-            const error = await res.json();
-            errorMessage = error.message || error.error || errorMessage;
-            console.error('Erro do servidor:', error);
-          } catch (e) {
-            const errorText = await res.text();
-            console.error('Resposta do servidor:', errorText);
-            errorMessage = `Erro do servidor (${res.status}): ${errorText.substring(0, 100)}`;
-          }
-          showAlert(errorMessage, 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
+          const error = await res.json();
+          showAlert(error.message || 'Erro ao criar', 'error');
         }
       } catch (e) {
-        console.error('Erro ao criar transferência:', e);
-        showAlert(`Erro: ${e.message}`, 'error');
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        showAlert('Erro: ' + e.message, 'error');
       }
-    };
+    }
 
     async function markAsTransferred(id) {
-      if (!confirm('Confirmar que a transferência saiu do almoxarifado?')) return;
+      if (!confirm('Confirmar saída do almoxarifado?')) return;
 
       try {
         const res = await fetch(`/transfers/${id}/transfer`, {
@@ -1351,117 +1248,153 @@
         });
 
         if (res.ok) {
-          showAlert('Transferência marcada como em mãos do técnico!', 'success');
+          showAlert('Marcado como em mãos!', 'success');
           loadData();
-        } else {
-          showAlert('Erro ao atualizar transferência', 'error');
         }
       } catch (e) {
-        console.error(e);
-        showAlert('Erro ao atualizar transferência', 'error');
+        showAlert('Erro', 'error');
       }
     }
 
-    async function viewTransfer(id) {
+    async function revertTransfer(id) {
+      if (!confirm('⚠️ ATENÇÃO: Isso irá reverter a transferência e devolver os produtos ao estoque principal. Deseja continuar?')) return;
+
+      try {
+        const res = await fetch(`/transfers/${id}/revert`, {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          showAlert('Transferência revertida com sucesso! Produtos devolvidos ao estoque.', 'success');
+          loadData();
+        } else {
+          const error = await res.json();
+          showAlert(error.message || 'Erro ao reverter transferência', 'error');
+        }
+      } catch (e) {
+        showAlert('Erro: ' + e.message, 'error');
+      }
+    }
+
+    async function cancelTransfer(id) {
+      if (!confirm('⚠️ Tem certeza que deseja cancelar esta saída? Esta ação não pode ser desfeita.')) return;
+
+      try {
+        const res = await fetch(`/transfers/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'CANCELED' })
+        });
+
+        if (res.ok) {
+          showAlert('Saída cancelada com sucesso!', 'success');
+          loadData();
+        } else {
+          const error = await res.json();
+          showAlert(error.message || 'Erro ao cancelar saída', 'error');
+        }
+      } catch (e) {
+        showAlert('Erro: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteTransfer(id, number) {
+      if (!confirm(`Tem certeza que deseja apagar a transferência ${number}?\n\nEsta ação não pode ser desfeita!`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/transfers/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao apagar transferência');
+        }
+
+        showAlert(`Transferência ${number} apagada com sucesso!`, 'success');
+        await loadData();
+      } catch (e) {
+        showAlert('Erro: ' + e.message, 'error');
+      }
+    }
+
+    function viewTransfer(id) {
       currentTransferId = id;
-      const transfer = transfers.find(t => t.id === id);
-      if (!transfer) return;
+      const t = transfers.find(x => x.id === id);
+      if (!t) return;
 
-      const status = STATUS_MAP[transfer.status];
+      const status = STATUS_MAP[t.status];
 
-      document.getElementById('detailTitle').textContent = `Transferência ${transfer.number}`;
+      document.getElementById('detailTitle').textContent = `Transferência ${t.number}`;
       document.getElementById('detailContent').innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          <!-- Informações Gerais -->
-          <div style="background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 10px; border-left: 3px solid #3b82f6;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">TÉCNICO</div>
-                <div style="font-weight: 600; color: #e2e8f0;">${transfer.technician.name}</div>
-              </div>
-              <div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">STATUS</div>
-                <span class="badge badge-${status.color}">${status.label}</span>
-              </div>
-              <div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">CRIADO EM</div>
-                <div style="font-weight: 600; color: #e2e8f0; font-size: 13px;">${new Date(transfer.createdAt).toLocaleString('pt-BR')}</div>
-              </div>
-              ${transfer.transferredAt ? `
-                <div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">SAIU DO ESTOQUE</div>
-                  <div style="font-weight: 600; color: #e2e8f0; font-size: 13px;">${new Date(transfer.transferredAt).toLocaleString('pt-BR')}</div>
-                </div>
-              ` : ''}
+        <div class="detail-section">
+          <div class="detail-grid">
+            <div>
+              <div class="detail-item-label">TÉCNICO</div>
+              <div class="detail-item-value">${t.technician.name}</div>
             </div>
-            ${transfer.note ? `
-              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(148, 163, 184, 0.1);">
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">OBSERVAÇÕES</div>
-                <div style="color: #94a3b8; font-size: 13px;">${transfer.note}</div>
+            <div>
+              <div class="detail-item-label">STATUS</div>
+              <span class="badge badge-${status.color}">${status.label}</span>
+            </div>
+            <div>
+              <div class="detail-item-label">CRIADO EM</div>
+              <div class="detail-item-value">${new Date(t.createdAt).toLocaleString('pt-BR')}</div>
+            </div>
+            ${t.transferredAt ? `
+              <div>
+                <div class="detail-item-label">SAIU EM</div>
+                <div class="detail-item-value">${new Date(t.transferredAt).toLocaleString('pt-BR')}</div>
               </div>
             ` : ''}
           </div>
+          ${t.note ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(148, 163, 184, 0.1);">
+              <div class="detail-item-label">OBSERVAÇÕES</div>
+              <div style="color: #94a3b8; font-size: 13px;">${t.note}</div>
+            </div>
+          ` : ''}
+        </div>
 
-          <!-- Itens -->
-          <div>
-            <div style="font-size: 13px; font-weight: 700; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-              <span>📦</span> ITENS DA SAÍDA <span style="background: rgba(148, 163, 184, 0.15); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">${transfer.items.length}</span>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              ${transfer.items.map(item => {
-                const itemStatus = ITEM_STATUS_MAP[item.status];
-                return `
-                  <div style="background: rgba(15, 23, 42, 0.4); padding: 14px; border-radius: 8px; border-left: 3px solid ${itemStatus.color === 'success' ? '#10b981' : itemStatus.color === 'warning' ? '#fbbf24' : itemStatus.color === 'danger' ? '#ef4444' : '#3b82f6'};">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                      <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px;">${item.product.name}</div>
-                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                          ${item.serialNumber ? `<div style="font-size: 11px; color: #64748b; font-family: monospace;">🔢 SN: ${item.serialNumber}</div>` : ''}
-                          ${item.macAddress ? `<div style="font-size: 11px; color: #64748b; font-family: monospace;">🌐 MAC: ${item.macAddress}</div>` : ''}
-                          ${item.invoiceNumber ? `<div style="font-size: 11px; color: #64748b;">📄 NF: ${item.invoiceNumber}</div>` : ''}
-                          ${item.ixcClientCode ? `<div style="font-size: 11px; color: #64748b;">👤 Cliente: ${item.ixcClientCode}</div>` : ''}
-                        </div>
-                      </div>
-                      <div style="text-align: right;">
-                        <span class="badge badge-${itemStatus.color}" style="font-size: 10px; padding: 5px 10px; border-radius: 12px;">${itemStatus.label}</span>
-                        ${item.usedAt ? `<div style="font-size: 10px; color: #64748b; margin-top: 4px;">${new Date(item.usedAt).toLocaleDateString('pt-BR')}</div>` : ''}
-                        ${item.returnedAt ? `<div style="font-size: 10px; color: #64748b; margin-top: 4px;">${new Date(item.returnedAt).toLocaleDateString('pt-BR')}</div>` : ''}
-                      </div>
-                    </div>
-                    ${item.usageNote ? `
-                      <div style="padding: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 6px; font-size: 11px; color: #94a3b8; margin-top: 8px;">
-                        💬 ${item.usageNote}
-                      </div>
-                    ` : ''}
-                  </div>
-                `;
-              }).join('')}
-            </div>
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #94a3b8; margin-bottom: 10px;">
+            📦 ITENS (${t.items.length})
           </div>
+          ${t.items.map(item => {
+            const itemStatus = ITEM_STATUS_MAP[item.status];
+            return `
+              <div class="detail-section" style="border-left-color: ${itemStatus.color === 'success' ? '#10b981' : itemStatus.color === 'warning' ? '#fbbf24' : '#3b82f6'}">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong style="font-size: 14px;">${item.product.name}</strong>
+                  <span class="badge badge-${itemStatus.color}">${itemStatus.label}</span>
+                </div>
+                ${item.serialNumber ? `<div style="font-size: 12px; color: #64748b;">SN: ${item.serialNumber}</div>` : ''}
+                ${item.macAddress ? `<div style="font-size: 12px; color: #64748b;">MAC: ${item.macAddress}</div>` : ''}
+                ${item.ixcClientCode ? `<div style="font-size: 12px; color: #64748b;">Cliente: ${item.ixcClientCode}</div>` : ''}
+                ${item.usageNote ? `<div style="margin-top: 8px; padding: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 4px; font-size: 12px;">💬 ${item.usageNote}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
 
-      document.getElementById('detailModal').style.display = 'block';
+      showModal('detailModal');
     }
 
-    function hideDetailModal() {
-      document.getElementById('detailModal').style.display = 'none';
-    }
-
-    function showUseModal(itemId) {
+    function showUseModal(transferId, itemId) {
+      currentTransferId = transferId;
       document.getElementById('useItemId').value = itemId;
       document.getElementById('useForm').reset();
       document.getElementById('useItemId').value = itemId;
-      document.getElementById('useModal').style.display = 'block';
+      showModal('useModal');
     }
 
-    function hideUseModal() {
-      document.getElementById('useModal').style.display = 'none';
-    }
-
-    document.getElementById('useForm').onsubmit = async (e) => {
-      e.preventDefault();
-
+    async function submitUse() {
       const itemId = parseInt(document.getElementById('useItemId').value);
       const ixcClientCode = document.getElementById('ixcClientCode').value;
       const usageNote = document.getElementById('usageNote').value;
@@ -1476,20 +1409,16 @@
 
         if (res.ok) {
           showAlert('Item marcado como usado!', 'success');
-          hideUseModal();
+          hideModal('useModal');
           loadData();
-          setTimeout(() => viewTransfer(currentTransferId), 500);
-        } else {
-          showAlert('Erro ao marcar item', 'error');
         }
       } catch (e) {
-        console.error(e);
-        showAlert('Erro ao marcar item', 'error');
+        showAlert('Erro', 'error');
       }
-    };
+    }
 
     async function markItemReturned(transferId, itemId) {
-      if (!confirm('Confirmar devolução deste item?')) return;
+      if (!confirm('Confirmar devolução?')) return;
 
       try {
         const res = await fetch(`/transfers/${transferId}/items/${itemId}/return`, {
@@ -1500,17 +1429,23 @@
         if (res.ok) {
           showAlert('Item devolvido!', 'success');
           loadData();
-          setTimeout(() => viewTransfer(transferId), 500);
-        } else {
-          showAlert('Erro ao devolver item', 'error');
         }
       } catch (e) {
-        console.error(e);
-        showAlert('Erro ao devolver item', 'error');
+        showAlert('Erro', 'error');
       }
     }
 
-    // Modal só fecha quando clicar no botão X, não ao clicar fora
+    function showModal(id) {
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function hideModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function showAlert(message, type) {
+      alert(message);
+    }
 
     init();
   </script>
