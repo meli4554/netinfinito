@@ -9,34 +9,45 @@ import { AllExceptionsFilter } from '../src/filters/http-exception.filter'
 let cachedServer: any = null
 
 async function bootstrap() {
-  if (cachedServer) {
-    return cachedServer
+  try {
+    if (cachedServer) {
+      return cachedServer
+    }
+
+    console.log('Initializing NestJS application...')
+
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug'],
+      bodyParser: true
+    })
+
+    console.log('NestJS application created')
+
+    // Configurar arquivos estáticos
+    app.useStaticAssets(join(__dirname, '..', 'public'))
+
+    // Configuração do CORS
+    app.enableCors({
+      origin: process.env.CORS_ORIGIN || true,
+      credentials: true
+    })
+
+    // Filtro global de exceções
+    app.useGlobalFilters(new AllExceptionsFilter())
+
+    await app.init()
+    console.log('NestJS application initialized')
+
+    const expressApp = app.getHttpAdapter().getInstance()
+    const handler = serverless(expressApp)
+
+    cachedServer = handler
+    console.log('Serverless handler cached')
+    return handler
+  } catch (error) {
+    console.error('Error in bootstrap:', error)
+    throw error
   }
-
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug'],
-    bodyParser: true
-  })
-
-  // Configurar arquivos estáticos
-  app.useStaticAssets(join(__dirname, '..', 'public'))
-
-  // Configuração do CORS
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || true,
-    credentials: true
-  })
-
-  // Filtro global de exceções
-  app.useGlobalFilters(new AllExceptionsFilter())
-
-  await app.init()
-
-  const expressApp = app.getHttpAdapter().getInstance()
-  const handler = serverless(expressApp)
-
-  cachedServer = handler
-  return handler
 }
 
 // Para desenvolvimento local
@@ -66,8 +77,17 @@ if (require.main === module) {
 }
 
 module.exports = async (req: any, res: any) => {
-  const handler = await bootstrap()
-  return handler(req, res)
+  try {
+    const handler = await bootstrap()
+    return handler(req, res)
+  } catch (error) {
+    console.error('Error in serverless handler:', error)
+    res.status(500).json({
+      statusCode: 500,
+      message: error instanceof Error ? error.message : 'Internal server error',
+      timestamp: new Date().toISOString()
+    })
+  }
 }
 
 export default module.exports
