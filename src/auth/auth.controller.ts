@@ -4,7 +4,7 @@ import { Public } from './public.decorator'
 import { Request } from 'express'
 
 class LoginDto {
-  email: string // mantém nome 'email' para compatibilidade com frontend, mas será usado como username
+  email: string
   password: string
 }
 
