@@ -60,35 +60,8 @@
 
   <script src="/js/auth.js"></script>
   <script>
-    // Verifica se já está logado
-    AuthService.checkAuth().then(user => {
-      if (user) {
-        window.location.href = '/pages/dashboard.html';
-      }
-    });
-
-    // Handle do formulário de login
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-
-      showLoading(submitBtn);
-
-      try {
-        const data = await AuthService.login(email, password);
-        showAlert('Login realizado com sucesso!', 'success');
-
-        setTimeout(() => {
-          window.location.href = '/pages/dashboard.html';
-        }, 500);
-      } catch (error) {
-        hideLoading(submitBtn, 'Entrar no Sistema');
-        showAlert(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
-      }
-    });
+    // TEMPORÁRIO: Redireciona automaticamente para o dashboard sem login
+    window.location.href = '/pages/dashboard.html';
   </script>
 </body>
 </html>

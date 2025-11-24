@@ -32,15 +32,14 @@ const AuthService = {
 
   // Verifica se o usuário está logado
   async checkAuth() {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) {
-        return null;
-      }
-      return JSON.parse(userStr);
-    } catch (error) {
-      return null;
-    }
+    // TEMPORÁRIO: Retorna usuário fake sem verificação
+    return {
+      id: 1,
+      name: 'Usuário Temporário',
+      email: 'temp@netinfi.com',
+      roleId: 1,
+      roleName: 'admin'
+    };
   },
 
   // Faz logout
@@ -55,12 +54,14 @@ const AuthService = {
 
   // Redireciona para login se não autenticado
   async requireAuth() {
-    const user = await this.checkAuth();
-    if (!user) {
-      window.location.href = '/';
-      return null;
-    }
-    return user;
+    // TEMPORÁRIO: Sempre retorna usuário sem verificação
+    return {
+      id: 1,
+      name: 'Usuário Temporário',
+      email: 'temp@netinfi.com',
+      roleId: 1,
+      roleName: 'admin'
+    };
   }
 };
 
