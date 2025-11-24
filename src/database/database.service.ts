@@ -1,15 +1,21 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common'
-import * as mysql from 'mysql2/promise'
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import * as mysql from 'mysql2/promise';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
-  private pool: mysql.Pool
+  private pool: mysql.Pool;
 
   async onModuleInit() {
     // Configuração SSL para Aiven e outros serviços cloud
-    const sslConfig = process.env.DB_SSL === 'true'
-      ? { rejectUnauthorized: false }
-      : undefined
+    const sslConfig =
+      process.env.DB_SSL === 'true'
+        ? {
+            ca: fs.readFileSync(path.join(process.cwd(), 'ca.pem')),
+            rejectUnauthorized: true,
+          }
+        : undefined;
 
     // Criar pool de conexões
     this.pool = mysql.createPool({
@@ -23,10 +29,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       connectionLimit: 10,
       queueLimit: 0,
       enableKeepAlive: true,
-      keepAliveInitialDelay: 0
-    })
+      keepAliveInitialDelay: 0,
+    });
 
-    console.log('✓ Conectado ao MySQL:', process.env.DB_HOST)
+    console.log('✓ Pool de conexões para o MySQL criado. Host:', process.env.DB_HOST);
   }
 
   async onModuleDestroy() {
