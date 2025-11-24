@@ -35,16 +35,25 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     console.log('🔧 Iniciando configuração do banco de dados...');
-    console.log('📊 Variáveis de ambiente:');
-    console.log('  - DB_HOST:', process.env.DB_HOST);
-    console.log('  - DB_PORT:', process.env.DB_PORT);
-    console.log('  - DB_USER:', process.env.DB_USER);
-    console.log('  - DB_NAME:', process.env.DB_NAME);
-    console.log('  - DB_SSL:', process.env.DB_SSL);
+
+    // Suporta tanto MYSQL_* (padrão Aiven) quanto DB_* (custom)
+    const host = process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost';
+    const port = parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306');
+    const user = process.env.MYSQL_USER || process.env.DB_USER || 'root';
+    const password = process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '';
+    const database = process.env.MYSQL_DATABASE || process.env.DB_NAME || 'defaultdb';
+    const sslMode = process.env.MYSQL_SSL_MODE || process.env.DB_SSL;
+
+    console.log('📊 Variáveis de ambiente detectadas:');
+    console.log('  - Host:', host);
+    console.log('  - Port:', port);
+    console.log('  - User:', user);
+    console.log('  - Database:', database);
+    console.log('  - SSL Mode:', sslMode);
 
     // Configuração SSL para Aiven e outros serviços cloud
     const sslConfig =
-      process.env.DB_SSL === 'true'
+      sslMode === 'REQUIRED' || sslMode === 'true'
         ? {
             ca: AIVEN_CA_CERT,
             rejectUnauthorized: true,
@@ -55,11 +64,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     // Criar pool de conexões com configurações otimizadas para Vercel
     this.pool = mysql.createPool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '3306'),
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'defaultdb',
+      host,
+      port,
+      user,
+      password,
+      database,
       ssl: sslConfig,
       waitForConnections: true,
       connectionLimit: 5, // Reduzido para serverless
