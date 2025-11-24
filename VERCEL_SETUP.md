@@ -21,7 +21,6 @@ No painel da Vercel, vá em **Settings** > **Environment Variables** e adicione:
 | `DB_NAME` | `defaultdb` |
 | `DB_SSL` | `true` |
 | `NODE_ENV` | `production` |
-| `JWT_SECRET` | `<GERE_UMA_CHAVE_SECRETA_FORTE>` |
 | `CORS_ORIGIN` | `true` |
 
 ## Importante

@@ -46,7 +46,6 @@ Adicione estas variáveis (clique em "Add" para cada uma):
 | `DB_NAME` | `defaultdb` | Production, Preview, Development |
 | `DB_SSL` | `true` | Production, Preview, Development |
 | `NODE_ENV` | `production` | Production, Preview, Development |
-| `JWT_SECRET` | `<GERE_UMA_CHAVE_FORTE>` | Production, Preview, Development |
 | `CORS_ORIGIN` | `true` | Production, Preview, Development |
 
 **Dica**: Marque as 3 checkboxes (Production, Preview, Development) para cada variável!
