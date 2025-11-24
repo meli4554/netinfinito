@@ -82,84 +82,99 @@ export class TransfersService {
       LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
       LEFT JOIN technician tech ON tech.id = t.technicianId
       ORDER BY t.createdAt DESC
-    `)
+    `);
 
-    // Buscar items para cada transfer
-    const transfersWithItems = await Promise.all(
-      transfers.map(async (transfer) => {
-        const items = await this.db.query<any>(`
-          SELECT
-            ti.*,
-            p.id as product_id,
-            p.sku as product_sku,
-            p.name as product_name,
-            p.unit as product_unit
-          FROM transferitem ti
-          INNER JOIN product p ON p.id = ti.productId
-          WHERE ti.transferId = ?
-        `, [transfer.id])
+    if (transfers.length === 0) {
+      return [];
+    }
 
-        return {
-          id: transfer.id,
-          number: transfer.number,
-          status: transfer.status,
-          fromWarehouseId: transfer.fromWarehouseId,
-          toWarehouseId: transfer.toWarehouseId,
-          technicianId: transfer.technicianId,
-          createdBy: transfer.createdBy,
-          note: transfer.note,
-          transferredAt: transfer.transferredAt,
-          receivedAt: transfer.receivedAt,
-          canceledAt: transfer.canceledAt,
-          signatureType: transfer.signatureType,
-          signatureFile: transfer.signatureFile,
-          createdAt: transfer.createdAt,
-          updatedAt: transfer.updatedAt,
-          fromWarehouse: transfer.fromWarehouse_id ? {
-            id: transfer.fromWarehouse_id,
-            name: transfer.fromWarehouse_name,
-            code: transfer.fromWarehouse_code,
-            type: transfer.fromWarehouse_type
-          } : null,
-          toWarehouse: transfer.toWarehouse_id ? {
-            id: transfer.toWarehouse_id,
-            name: transfer.toWarehouse_name,
-            code: transfer.toWarehouse_code,
-            type: transfer.toWarehouse_type
-          } : null,
-          technician: transfer.technician_id ? {
-            id: transfer.technician_id,
-            name: transfer.technician_name,
-            category: transfer.technician_category,
-            phone: transfer.technician_phone,
-            email: transfer.technician_email
-          } : null,
-          items: items.map(item => ({
-            id: item.id,
-            transferId: item.transferId,
-            productId: item.productId,
-            productInstanceId: item.productInstanceId,
-            serialNumber: item.serialNumber,
-            macAddress: item.macAddress,
-            invoiceNumber: item.invoiceNumber,
-            quantity: item.quantity,
-            status: item.status,
-            usedAt: item.usedAt,
-            returnedAt: item.returnedAt,
-            ixcClientCode: item.ixcClientCode,
-            usageNote: item.usageNote,
-            product: {
-              id: item.product_id,
-              sku: item.product_sku,
-              name: item.product_name,
-              unit: item.product_unit
-            }
-          }))
-        }
-      })
-    )
+    const transferIds = transfers.map(t => t.id);
 
-    return transfersWithItems
+    // Busca todos os itens de uma vez
+    const allItems = await this.db.query<any>(`
+      SELECT
+        ti.*,
+        p.id as product_id,
+        p.sku as product_sku,
+        p.name as product_name,
+        p.unit as product_unit
+      FROM transferitem ti
+      INNER JOIN product p ON p.id = ti.productId
+      WHERE ti.transferId IN (?)
+    `, [transferIds]);
+
+    // Agrupa os itens por transferId para fácil acesso
+    const itemsByTransferId = new Map<number, any[]>();
+    for (const item of allItems) {
+      if (!itemsByTransferId.has(item.transferId)) {
+        itemsByTransferId.set(item.transferId, []);
+      }
+      itemsByTransferId.get(item.transferId).push(item);
+    }
+
+    // Monta a resposta final
+    const transfersWithItems = transfers.map(transfer => {
+      const items = itemsByTransferId.get(transfer.id) || [];
+      return {
+        id: transfer.id,
+        number: transfer.number,
+        status: transfer.status,
+        fromWarehouseId: transfer.fromWarehouseId,
+        toWarehouseId: transfer.toWarehouseId,
+        technicianId: transfer.technicianId,
+        createdBy: transfer.createdBy,
+        note: transfer.note,
+        transferredAt: transfer.transferredAt,
+        receivedAt: transfer.receivedAt,
+        canceledAt: transfer.canceledAt,
+        signatureType: transfer.signatureType,
+        signatureFile: transfer.signatureFile,
+        createdAt: transfer.createdAt,
+        updatedAt: transfer.updatedAt,
+        fromWarehouse: transfer.fromWarehouse_id ? {
+          id: transfer.fromWarehouse_id,
+          name: transfer.fromWarehouse_name,
+          code: transfer.fromWarehouse_code,
+          type: transfer.fromWarehouse_type
+        } : null,
+        toWarehouse: transfer.toWarehouse_id ? {
+          id: transfer.toWarehouse_id,
+          name: transfer.toWarehouse_name,
+          code: transfer.toWarehouse_code,
+          type: transfer.toWarehouse_type
+        } : null,
+        technician: transfer.technician_id ? {
+          id: transfer.technician_id,
+          name: transfer.technician_name,
+          category: transfer.technician_category,
+          phone: transfer.technician_phone,
+          email: transfer.technician_email
+        } : null,
+        items: items.map(item => ({
+          id: item.id,
+          transferId: item.transferId,
+          productId: item.productId,
+          productInstanceId: item.productInstanceId,
+          serialNumber: item.serialNumber,
+          macAddress: item.macAddress,
+          invoiceNumber: item.invoiceNumber,
+          quantity: item.quantity,
+          status: item.status,
+          usedAt: item.usedAt,
+          returnedAt: item.returnedAt,
+          ixcClientCode: item.ixcClientCode,
+          usageNote: item.usageNote,
+          product: {
+            id: item.product_id,
+            sku: item.product_sku,
+            name: item.product_name,
+            unit: item.product_unit
+          }
+        }))
+      };
+    });
+
+    return transfersWithItems;
   }
 
   async findOne(id: number) {
