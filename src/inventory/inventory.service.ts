@@ -8,7 +8,7 @@ export class InventoryService {
   async summary() {
     // Buscar todos os produtos
     const products = await this.db.query<any>(
-      'SELECT id, sku, name FROM Product'
+      'SELECT id, sku, name FROM product'
     )
 
     // Buscar totais de quantidade por produto
@@ -16,7 +16,7 @@ export class InventoryService {
       SELECT
         productId,
         SUM(quantity) as totalQuantity
-      FROM StockMovement
+      FROM stockmovement
       GROUP BY productId
     `)
 
@@ -34,7 +34,7 @@ export class InventoryService {
 
   movements(productId: number) {
     return this.db.query(
-      'SELECT * FROM StockMovement WHERE productId = ? ORDER BY occurredAt DESC',
+      'SELECT * FROM stockmovement WHERE productId = ? ORDER BY occurredAt DESC',
       [productId]
     )
   }

@@ -17,9 +17,9 @@ export class WarehousesService {
         t.phone as technician_phone,
         t.email as technician_email,
         t.isActive as technician_isActive,
-        (SELECT COUNT(*) FROM Location l WHERE l.warehouseId = w.id) as locations_count
-      FROM Warehouse w
-      LEFT JOIN Technician t ON t.id = w.technicianId
+        (SELECT COUNT(*) FROM location l WHERE l.warehouseId = w.id) as locations_count
+      FROM warehouse w
+      LEFT JOIN technician t ON t.id = w.technicianId
       ORDER BY w.createdAt DESC
     `
 
@@ -29,7 +29,7 @@ export class WarehousesService {
     const warehousesWithLocations = await Promise.all(
       rows.map(async (row) => {
         const locations = await this.db.query(
-          'SELECT * FROM Location WHERE warehouseId = ?',
+          'SELECT * FROM location WHERE warehouseId = ?',
           [row.id]
         )
 
@@ -69,8 +69,8 @@ export class WarehousesService {
         t.phone as technician_phone,
         t.email as technician_email,
         t.isActive as technician_isActive
-      FROM Warehouse w
-      LEFT JOIN Technician t ON t.id = w.technicianId
+      FROM warehouse w
+      LEFT JOIN technician t ON t.id = w.technicianId
       WHERE w.id = ?
     `
 
@@ -80,7 +80,7 @@ export class WarehousesService {
 
     // Buscar locations
     const locations = await this.db.query(
-      'SELECT * FROM Location WHERE warehouseId = ?',
+      'SELECT * FROM location WHERE warehouseId = ?',
       [id]
     )
 
@@ -114,8 +114,8 @@ export class WarehousesService {
         t.phone as technician_phone,
         t.email as technician_email,
         t.isActive as technician_isActive
-      FROM Warehouse w
-      LEFT JOIN Technician t ON t.id = w.technicianId
+      FROM warehouse w
+      LEFT JOIN technician t ON t.id = w.technicianId
       WHERE w.id = ?
     `
 
@@ -155,8 +155,8 @@ export class WarehousesService {
           p.trackSerial,
           sm.type,
           sm.quantity
-        FROM StockMovement sm
-        INNER JOIN Product p ON p.id = sm.productId
+        FROM stockmovement sm
+        INNER JOIN product p ON p.id = sm.productId
         WHERE sm.technicianId IS NULL
         ORDER BY p.name ASC
       `)
@@ -198,7 +198,7 @@ export class WarehousesService {
     let transfers = []
     if (warehouse.type === 'TECHNICIAN' && warehouse.technicianId) {
       const transferRows = await this.db.query<any>(`
-        SELECT * FROM Transfer
+        SELECT * FROM transfer
         WHERE technicianId = ?
           AND status IN ('IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED')
       `, [warehouse.technicianId])
@@ -212,8 +212,8 @@ export class WarehousesService {
               p.sku as product_sku,
               p.name as product_name,
               p.unit as product_unit
-            FROM TransferItem ti
-            INNER JOIN Product p ON p.id = ti.productId
+            FROM transferitem ti
+            INNER JOIN product p ON p.id = ti.productId
             WHERE ti.transferId = ?
               AND ti.status IN ('IN_HANDS', 'PENDING')
           `, [transfer.id])
@@ -288,7 +288,7 @@ export class WarehousesService {
   }) {
     // Verificar se o código já existe
     const existing = await this.db.queryOne(
-      'SELECT * FROM Warehouse WHERE code = ?',
+      'SELECT * FROM warehouse WHERE code = ?',
       [data.code]
     )
 
@@ -302,8 +302,8 @@ export class WarehousesService {
         SELECT
           t.*,
           w.id as warehouse_id
-        FROM Technician t
-        LEFT JOIN Warehouse w ON w.technicianId = t.id
+        FROM technician t
+        LEFT JOIN warehouse w ON w.technicianId = t.id
         WHERE t.id = ?
       `, [data.technicianId])
 
@@ -319,7 +319,7 @@ export class WarehousesService {
     }
 
     const result = await this.db.execute(
-      'INSERT INTO Warehouse (name, code, type, technicianId) VALUES (?, ?, ?, ?)',
+      'INSERT INTO warehouse (name, code, type, technicianId) VALUES (?, ?, ?, ?)',
       [data.name, data.code, data.type, data.technicianId || null]
     )
 
@@ -336,7 +336,7 @@ export class WarehousesService {
     },
   ) {
     const warehouse = await this.db.queryOne(
-      'SELECT * FROM Warehouse WHERE id = ?',
+      'SELECT * FROM warehouse WHERE id = ?',
       [id]
     )
 
@@ -347,7 +347,7 @@ export class WarehousesService {
     // Se estiver mudando o código, verificar se já existe
     if (data.code && data.code !== (warehouse as any).code) {
       const existing = await this.db.queryOne(
-        'SELECT * FROM Warehouse WHERE code = ?',
+        'SELECT * FROM warehouse WHERE code = ?',
         [data.code]
       )
 
@@ -364,8 +364,8 @@ export class WarehousesService {
         SELECT
           t.*,
           w.id as warehouse_id
-        FROM Technician t
-        LEFT JOIN Warehouse w ON w.technicianId = t.id
+        FROM technician t
+        LEFT JOIN warehouse w ON w.technicianId = t.id
         WHERE t.id = ?
       `, [data.technicianId])
 
@@ -406,7 +406,7 @@ export class WarehousesService {
     if (updates.length > 0) {
       values.push(id)
       await this.db.execute(
-        `UPDATE Warehouse SET ${updates.join(', ')} WHERE id = ?`,
+        `UPDATE warehouse SET ${updates.join(', ')} WHERE id = ?`,
         values
       )
     }
@@ -417,7 +417,7 @@ export class WarehousesService {
   async delete(id: number) {
     // Verificar se o almoxarifado existe e buscar seu tipo
     const warehouse = await this.db.queryOne<any>(
-      'SELECT * FROM Warehouse WHERE id = ?',
+      'SELECT * FROM warehouse WHERE id = ?',
       [id]
     )
 
@@ -434,12 +434,12 @@ export class WarehousesService {
 
     // Verificar se existem transferências relacionadas
     const transfersFrom = await this.db.query(
-      'SELECT COUNT(*) as count FROM Transfer WHERE fromWarehouseId = ?',
+      'SELECT COUNT(*) as count FROM transfer WHERE fromWarehouseId = ?',
       [id]
     )
 
     const transfersTo = await this.db.query(
-      'SELECT COUNT(*) as count FROM Transfer WHERE toWarehouseId = ?',
+      'SELECT COUNT(*) as count FROM transfer WHERE toWarehouseId = ?',
       [id]
     )
 
@@ -450,8 +450,8 @@ export class WarehousesService {
     }
 
     // Excluir locations primeiro
-    await this.db.execute('DELETE FROM Location WHERE warehouseId = ?', [id])
+    await this.db.execute('DELETE FROM location WHERE warehouseId = ?', [id])
 
-    return this.db.execute('DELETE FROM Warehouse WHERE id = ?', [id])
+    return this.db.execute('DELETE FROM warehouse WHERE id = ?', [id])
   }
 }

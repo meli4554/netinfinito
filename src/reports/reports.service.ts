@@ -17,9 +17,9 @@ export class ReportsService {
         p.unit,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.usedAt >= ? AND pu.usedAt <= ?
     `, [startDate, endDate])
 
@@ -71,9 +71,9 @@ export class ReportsService {
         p.name,
         p.unit,
         t.name as technician_name
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.usedAt >= ? AND pu.usedAt <= ?
     `, [startDate, endDate])
 
@@ -124,9 +124,9 @@ export class ReportsService {
         p.name as product_name,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.usedAt >= ? AND pu.usedAt <= ?
     `, [startDate, endDate])
 
@@ -199,9 +199,9 @@ export class ReportsService {
         p.name,
         p.unit,
         t.name as technician_name
-      FROM StockMovement sm
-      INNER JOIN Product p ON p.id = sm.productId
-      LEFT JOIN Technician t ON t.id = sm.technicianId
+      FROM stockmovement sm
+      INNER JOIN product p ON p.id = sm.productId
+      LEFT JOIN technician t ON t.id = sm.technicianId
     `)
 
     // Estoque do almoxarifado principal

@@ -10,19 +10,19 @@ export class UsersService {
     const passwordHash = await argon2.hash(dto.password)
 
     const result = await this.db.execute(
-      `INSERT INTO User (id, email, passwordHash, name, roleId, isActive, createdAt, updatedAt)
+      `INSERT INTO user (id, email, passwordHash, name, roleId, isActive, createdAt, updatedAt)
        VALUES (UUID(), ?, ?, ?, ?, 1, NOW(), NOW())`,
       [dto.email, passwordHash, dto.name || null, dto.roleId]
     )
 
     return this.db.queryOne(
-      'SELECT * FROM User WHERE email = ?',
+      'SELECT * FROM user WHERE email = ?',
       [dto.email]
     )
   }
 
   list() {
-    return this.db.query('SELECT * FROM User')
+    return this.db.query('SELECT * FROM user')
   }
 
   async update(id: string, dto: { name?: string; roleId?: number; isActive?: boolean }) {
@@ -43,17 +43,17 @@ export class UsersService {
     }
 
     if (fields.length === 0) {
-      return this.db.queryOne('SELECT * FROM User WHERE id = ?', [id])
+      return this.db.queryOne('SELECT * FROM user WHERE id = ?', [id])
     }
 
     fields.push('updatedAt = NOW()')
     values.push(id)
 
     await this.db.execute(
-      `UPDATE User SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE user SET ${fields.join(', ')} WHERE id = ?`,
       values
     )
 
-    return this.db.queryOne('SELECT * FROM User WHERE id = ?', [id])
+    return this.db.queryOne('SELECT * FROM user WHERE id = ?', [id])
   }
 }

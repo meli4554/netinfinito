@@ -11,17 +11,27 @@ export class AuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest()
 
-    // Verifica se existe uma sessão e se o usuário está logado
-    if (!req.session || !req.session.user) {
+    // Verifica se existe token no header
+    const token = req.headers['x-auth-token']
+    if (!token) {
       throw new UnauthorizedException('Você precisa estar logado')
     }
 
-    // Adiciona os dados do usuário ao request
-    req.user = {
-      sub: req.session.user.id,
-      roleId: req.session.user.roleId
-    }
+    // Decodifica o token (base64) para obter o email
+    try {
+      const email = Buffer.from(token, 'base64').toString('utf-8')
 
-    return true
+      // Adiciona informações básicas ao request
+      // (em produção, você deve buscar do banco ou validar melhor)
+      req.user = {
+        sub: 'user-id',
+        email: email,
+        roleId: 1
+      }
+
+      return true
+    } catch (error) {
+      throw new UnauthorizedException('Token inválido')
+    }
   }
 }

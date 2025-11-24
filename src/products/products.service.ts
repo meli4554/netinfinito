@@ -8,7 +8,7 @@ export class ProductsService {
   // Gerar SKU automático
   private async generateSKU(): Promise<string> {
     const result = await this.db.queryOne<{ count: number }>(
-      'SELECT COUNT(*) as count FROM Product'
+      'SELECT COUNT(*) as count FROM product'
     )
     const nextNumber = (result?.count || 0) + 1
     return `PROD-${nextNumber.toString().padStart(6, '0')}`
@@ -29,7 +29,7 @@ export class ProductsService {
 
     // Criar produto
     const result = await this.db.execute(
-      `INSERT INTO Product (sku, name, unit, barCode, minStock, trackSerial, createdAt, updatedAt)
+      `INSERT INTO product (sku, name, unit, barCode, minStock, trackSerial, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         sku,
@@ -46,7 +46,7 @@ export class ProductsService {
     // Se tiver quantidade inicial, criar movimento de entrada
     if (dto.initialQuantity && dto.initialQuantity > 0) {
       await this.db.execute(
-        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+        `INSERT INTO stockmovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
          VALUES (?, 'IN', ?, 'ENTRY', ?, NOW(), 'Estoque inicial')`,
         [productId, dto.initialQuantity, productId]
       )
@@ -56,7 +56,7 @@ export class ProductsService {
     if (dto.trackSerial && dto.instances && dto.instances.length > 0) {
       for (const inst of dto.instances) {
         await this.db.execute(
-          `INSERT INTO ProductInstance (productId, serialNumber, macAddress, createdAt, updatedAt)
+          `INSERT INTO productinstance (productId, serialNumber, macAddress, createdAt, updatedAt)
            VALUES (?, ?, ?, NOW(), NOW())`,
           [productId, inst.serialNumber || null, inst.macAddress || null]
         )
@@ -78,14 +78,14 @@ export class ProductsService {
       trackSerial: boolean
       createdAt: Date
       updatedAt: Date
-    }>('SELECT * FROM Product ORDER BY id DESC')
+    }>('SELECT * FROM product ORDER BY id DESC')
 
     // Calcular estoque atual para cada produto
     const productsWithStock = await Promise.all(
       products.map(async (product) => {
         // Contar instâncias
         const instanceCount = await this.db.queryOne<{ count: number }>(
-          'SELECT COUNT(*) as count FROM ProductInstance WHERE productId = ?',
+          'SELECT COUNT(*) as count FROM productinstance WHERE productId = ?',
           [product.id]
         )
 
@@ -94,7 +94,7 @@ export class ProductsService {
         const movements = await this.db.query<{
           type: string
           quantity: number
-        }>('SELECT type, quantity FROM StockMovement WHERE productId = ? AND technicianId IS NULL', [
+        }>('SELECT type, quantity FROM stockmovement WHERE productId = ? AND technicianId IS NULL', [
           product.id,
         ])
 
@@ -131,13 +131,13 @@ export class ProductsService {
       trackSerial: boolean
       createdAt: Date
       updatedAt: Date
-    }>('SELECT * FROM Product WHERE id = ?', [id])
+    }>('SELECT * FROM product WHERE id = ?', [id])
 
     if (!product) return null
 
     // Buscar instâncias se houver (ordenar: disponíveis primeiro)
     const instances = await this.db.query(
-      `SELECT * FROM ProductInstance
+      `SELECT * FROM productinstance
        WHERE productId = ?
        ORDER BY
          CASE status
@@ -190,7 +190,7 @@ export class ProductsService {
     values.push(id)
 
     await this.db.execute(
-      `UPDATE Product SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE product SET ${fields.join(', ')} WHERE id = ?`,
       values
     )
 
@@ -199,11 +199,11 @@ export class ProductsService {
 
   async delete(id: number) {
     // Excluir TODAS as dependências do produto
-    await this.db.execute('DELETE FROM ProductUsage WHERE productId = ?', [id])
-    await this.db.execute('DELETE FROM TransferItem WHERE productId = ?', [id])
-    await this.db.execute('DELETE FROM StockMovement WHERE productId = ?', [id])
-    await this.db.execute('DELETE FROM ProductInstance WHERE productId = ?', [id])
-    await this.db.execute('DELETE FROM Product WHERE id = ?', [id])
+    await this.db.execute('DELETE FROM productusage WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM transferitem WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM stockmovement WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM productinstance WHERE productId = ?', [id])
+    await this.db.execute('DELETE FROM product WHERE id = ?', [id])
 
     return { success: true }
   }

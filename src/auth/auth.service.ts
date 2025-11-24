@@ -14,7 +14,7 @@ export class AuthService {
       name: string | null
       roleId: number
       isActive: boolean
-    }>('SELECT * FROM User WHERE email = ?', [email])
+    }>('SELECT * FROM user WHERE email = ?', [email])
 
     if (!user) throw new UnauthorizedException('Credenciais inválidas')
     if (!user.isActive) throw new UnauthorizedException('Usuário inativo')
@@ -24,7 +24,7 @@ export class AuthService {
 
     // Buscar informações da role
     const role = await this.db.queryOne<{ name: string }>(
-      'SELECT name FROM Role WHERE id = ?',
+      'SELECT name FROM role WHERE id = ?',
       [user.roleId]
     )
 

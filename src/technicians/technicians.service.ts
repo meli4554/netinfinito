@@ -71,7 +71,7 @@ export class TechniciansService {
   }) {
     // Criar técnico
     const result = await this.db.execute(
-      'INSERT INTO Technician (name, category, phone, email) VALUES (?, ?, ?, ?)',
+      'INSERT INTO technician (name, category, phone, email) VALUES (?, ?, ?, ?)',
       [data.name, data.category, data.phone || null, data.email || null]
     )
 
@@ -79,13 +79,13 @@ export class TechniciansService {
 
     // Criar almoxarifado do técnico automaticamente
     await this.db.execute(
-      'INSERT INTO Warehouse (name, code, type, technicianId) VALUES (?, ?, ?, ?)',
+      'INSERT INTO warehouse (name, code, type, technicianId) VALUES (?, ?, ?, ?)',
       [`Almoxarifado - ${data.name}`, `TECH-${technicianId}`, 'TECHNICIAN', technicianId]
     )
 
     // Buscar técnico criado
     const technician = await this.db.queryOne<Technician>(
-      'SELECT * FROM Technician WHERE id = ?',
+      'SELECT * FROM technician WHERE id = ?',
       [technicianId]
     )
 
@@ -101,8 +101,8 @@ export class TechniciansService {
         w.code as warehouse_code,
         w.type as warehouse_type,
         w.createdAt as warehouse_createdAt
-      FROM Technician t
-      LEFT JOIN Warehouse w ON w.technicianId = t.id
+      FROM technician t
+      LEFT JOIN warehouse w ON w.technicianId = t.id
       WHERE t.isActive = 1
       ORDER BY t.name ASC
     `
@@ -147,8 +147,8 @@ export class TechniciansService {
         w.type as warehouse_type,
         w.createdAt as warehouse_createdAt,
         w.updatedAt as warehouse_updatedAt
-      FROM Technician t
-      LEFT JOIN Warehouse w ON w.technicianId = t.id
+      FROM technician t
+      LEFT JOIN warehouse w ON w.technicianId = t.id
       WHERE t.id = ?
     `
 
@@ -159,7 +159,7 @@ export class TechniciansService {
     // Buscar locations do warehouse
     const locations = technician.warehouse_id
       ? await this.db.query<Location>(
-          'SELECT * FROM Location WHERE warehouseId = ?',
+          'SELECT * FROM location WHERE warehouseId = ?',
           [technician.warehouse_id]
         )
       : []
@@ -221,22 +221,22 @@ export class TechniciansService {
     }
 
     if (updates.length === 0) {
-      return this.db.queryOne<Technician>('SELECT * FROM Technician WHERE id = ?', [id])
+      return this.db.queryOne<Technician>('SELECT * FROM technician WHERE id = ?', [id])
     }
 
     values.push(id)
 
     await this.db.execute(
-      `UPDATE Technician SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE technician SET ${updates.join(', ')} WHERE id = ?`,
       values
     )
 
-    return this.db.queryOne<Technician>('SELECT * FROM Technician WHERE id = ?', [id])
+    return this.db.queryOne<Technician>('SELECT * FROM technician WHERE id = ?', [id])
   }
 
   async getStockSummary(technicianId: number) {
     const technician = await this.db.queryOne<Technician>(
-      'SELECT * FROM Technician WHERE id = ?',
+      'SELECT * FROM technician WHERE id = ?',
       [technicianId]
     )
 
@@ -245,7 +245,7 @@ export class TechniciansService {
     }
 
     const warehouse = await this.db.queryOne<Warehouse>(
-      'SELECT * FROM Warehouse WHERE technicianId = ?',
+      'SELECT * FROM warehouse WHERE technicianId = ?',
       [technicianId]
     )
 
@@ -260,8 +260,8 @@ export class TechniciansService {
         p.sku,
         p.name,
         p.unit
-      FROM StockMovement sm
-      INNER JOIN Product p ON p.id = sm.productId
+      FROM stockmovement sm
+      INNER JOIN product p ON p.id = sm.productId
       WHERE sm.technicianId = ?
     `, [technicianId])
 
@@ -300,7 +300,7 @@ export class TechniciansService {
   async delete(id: number) {
     // Verificar se o técnico existe
     const technician = await this.db.queryOne<Technician>(
-      'SELECT * FROM Technician WHERE id = ?',
+      'SELECT * FROM technician WHERE id = ?',
       [id]
     )
 
@@ -310,17 +310,17 @@ export class TechniciansService {
 
     // Buscar warehouse do técnico
     const warehouse = await this.db.queryOne<Warehouse>(
-      'SELECT * FROM Warehouse WHERE technicianId = ?',
+      'SELECT * FROM warehouse WHERE technicianId = ?',
       [id]
     )
 
     // Deletar o almoxarifado do técnico (se existir)
     if (warehouse) {
-      await this.db.execute('DELETE FROM Warehouse WHERE id = ?', [warehouse.id])
+      await this.db.execute('DELETE FROM warehouse WHERE id = ?', [warehouse.id])
     }
 
     // Deletar o técnico
-    await this.db.execute('DELETE FROM Technician WHERE id = ?', [id])
+    await this.db.execute('DELETE FROM technician WHERE id = ?', [id])
 
     return { message: 'Técnico excluído com sucesso' }
   }

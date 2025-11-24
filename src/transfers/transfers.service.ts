@@ -24,7 +24,7 @@ export class TransfersService {
   }) {
     // Buscar último transfer para gerar número
     const lastTransfer = await this.db.queryOne<any>(
-      'SELECT id FROM Transfer ORDER BY id DESC LIMIT 1'
+      'SELECT id FROM transfer ORDER BY id DESC LIMIT 1'
     )
 
     const nextNumber = lastTransfer
@@ -33,7 +33,7 @@ export class TransfersService {
 
     // Criar transfer
     const result = await this.db.execute(
-      `INSERT INTO Transfer (number, fromWarehouseId, toWarehouseId, technicianId, createdBy, note)
+      `INSERT INTO transfer (number, fromWarehouseId, toWarehouseId, technicianId, createdBy, note)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [nextNumber, data.fromWarehouseId, data.toWarehouseId, data.technicianId, data.createdBy || null, data.note || null]
     )
@@ -43,7 +43,7 @@ export class TransfersService {
     // Criar items
     for (const item of data.items) {
       await this.db.execute(
-        `INSERT INTO TransferItem (transferId, productId, productInstanceId, serialNumber, macAddress, invoiceNumber, quantity)
+        `INSERT INTO transferitem (transferId, productId, productInstanceId, serialNumber, macAddress, invoiceNumber, quantity)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           transferId,
@@ -77,10 +77,10 @@ export class TransfersService {
         tech.category as technician_category,
         tech.phone as technician_phone,
         tech.email as technician_email
-      FROM Transfer t
-      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
-      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
-      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      FROM transfer t
+      LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN technician tech ON tech.id = t.technicianId
       ORDER BY t.createdAt DESC
     `)
 
@@ -94,8 +94,8 @@ export class TransfersService {
             p.sku as product_sku,
             p.name as product_name,
             p.unit as product_unit
-          FROM TransferItem ti
-          INNER JOIN Product p ON p.id = ti.productId
+          FROM transferitem ti
+          INNER JOIN product p ON p.id = ti.productId
           WHERE ti.transferId = ?
         `, [transfer.id])
 
@@ -179,10 +179,10 @@ export class TransfersService {
         tech.category as technician_category,
         tech.phone as technician_phone,
         tech.email as technician_email
-      FROM Transfer t
-      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
-      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
-      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      FROM transfer t
+      LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN technician tech ON tech.id = t.technicianId
       WHERE t.id = ?
     `, [id])
 
@@ -195,8 +195,8 @@ export class TransfersService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM TransferItem ti
-      INNER JOIN Product p ON p.id = ti.productId
+      FROM transferitem ti
+      INNER JOIN product p ON p.id = ti.productId
       WHERE ti.transferId = ?
     `, [id])
 
@@ -262,12 +262,12 @@ export class TransfersService {
   async setStatus(id: number, status: TransferStatus) {
     if (status === 'CANCELED') {
       await this.db.execute(
-        'UPDATE Transfer SET status = ?, canceledAt = ? WHERE id = ?',
+        'UPDATE transfer SET status = ?, canceledAt = ? WHERE id = ?',
         [status, new Date(), id]
       )
     } else {
       await this.db.execute(
-        'UPDATE Transfer SET status = ? WHERE id = ?',
+        'UPDATE transfer SET status = ? WHERE id = ?',
         [status, id]
       )
     }
@@ -287,9 +287,9 @@ export class TransfersService {
         tw.name as toWarehouse_name,
         tw.code as toWarehouse_code,
         tw.type as toWarehouse_type
-      FROM Transfer t
-      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
-      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
+      FROM transfer t
+      LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
       WHERE t.technicianId = ?
       ORDER BY t.createdAt DESC
     `, [technicianId])
@@ -304,8 +304,8 @@ export class TransfersService {
             p.sku as product_sku,
             p.name as product_name,
             p.unit as product_unit
-          FROM TransferItem ti
-          INNER JOIN Product p ON p.id = ti.productId
+          FROM transferitem ti
+          INNER JOIN product p ON p.id = ti.productId
           WHERE ti.transferId = ?
         `, [transfer.id])
 
@@ -376,10 +376,10 @@ export class TransfersService {
         tech.id as technician_id,
         tech.name as technician_name,
         tech.category as technician_category
-      FROM Transfer t
-      LEFT JOIN Warehouse fw ON fw.id = t.fromWarehouseId
-      LEFT JOIN Warehouse tw ON tw.id = t.toWarehouseId
-      LEFT JOIN Technician tech ON tech.id = t.technicianId
+      FROM transfer t
+      LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
+      LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
+      LEFT JOIN technician tech ON tech.id = t.technicianId
       WHERE t.status IN ('PENDING', 'IN_HANDS', 'PARTIALLY_USED', 'PARTIALLY_RETURNED')
       ORDER BY t.createdAt DESC
     `)
@@ -394,8 +394,8 @@ export class TransfersService {
             p.sku as product_sku,
             p.name as product_name,
             p.unit as product_unit
-          FROM TransferItem ti
-          INNER JOIN Product p ON p.id = ti.productId
+          FROM transferitem ti
+          INNER JOIN product p ON p.id = ti.productId
           WHERE ti.transferId = ?
         `, [transfer.id])
 
@@ -464,8 +464,8 @@ export class TransfersService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM ProductInstance pi
-      INNER JOIN Product p ON p.id = pi.productId
+      FROM productinstance pi
+      INNER JOIN product p ON p.id = pi.productId
       WHERE (pi.serialNumber LIKE ? OR pi.macAddress LIKE ? OR p.name LIKE ? OR p.sku LIKE ?)
         AND pi.status = 'AVAILABLE'
       LIMIT 10
@@ -498,24 +498,24 @@ export class TransfersService {
 
     // Atualizar status da transferência
     await this.db.execute(
-      'UPDATE Transfer SET status = ?, transferredAt = ? WHERE id = ?',
+      'UPDATE transfer SET status = ?, transferredAt = ? WHERE id = ?',
       ['IN_HANDS', now, id]
     )
 
     // Atualizar status dos itens
     await this.db.execute(
-      'UPDATE TransferItem SET status = ? WHERE transferId = ?',
+      'UPDATE transferitem SET status = ? WHERE transferId = ?',
       ['IN_HANDS', id]
     )
 
     // Buscar transferência e itens
     const transfer = await this.db.queryOne<any>(
-      'SELECT * FROM Transfer WHERE id = ?',
+      'SELECT * FROM transfer WHERE id = ?',
       [id]
     )
 
     const items = await this.db.query<any>(
-      'SELECT * FROM TransferItem WHERE transferId = ?',
+      'SELECT * FROM transferitem WHERE transferId = ?',
       [id]
     )
 
@@ -523,7 +523,7 @@ export class TransfersService {
     for (const item of items) {
       // Saída do almoxarifado principal (locationId = NULL para warehouse principal)
       await this.db.execute(
-        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+        `INSERT INTO stockmovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           item.productId,
@@ -538,7 +538,7 @@ export class TransfersService {
 
       // Entrada no almoxarifado do técnico (technicianId preenchido)
       await this.db.execute(
-        `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+        `INSERT INTO stockmovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           item.productId,
@@ -555,7 +555,7 @@ export class TransfersService {
       // Se o item tem productInstanceId, atualizar o status da instância
       if (item.productInstanceId) {
         await this.db.execute(
-          'UPDATE ProductInstance SET status = ? WHERE id = ?',
+          'UPDATE productinstance SET status = ? WHERE id = ?',
           ['IN_USE', item.productInstanceId]
         )
       }
@@ -569,7 +569,7 @@ export class TransfersService {
 
     // Buscar transferência atual
     const transfer = await this.db.queryOne<any>(
-      'SELECT * FROM Transfer WHERE id = ?',
+      'SELECT * FROM transfer WHERE id = ?',
       [id]
     )
 
@@ -585,7 +585,7 @@ export class TransfersService {
 
     // Buscar itens da transferência
     const items = await this.db.query<any>(
-      'SELECT * FROM TransferItem WHERE transferId = ?',
+      'SELECT * FROM transferitem WHERE transferId = ?',
       [id]
     )
 
@@ -593,7 +593,7 @@ export class TransfersService {
     for (const item of items) {
       // Saída do técnico (technicianId preenchido)
       await this.db.execute(
-        `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+        `INSERT INTO stockmovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           item.productId,
@@ -609,7 +609,7 @@ export class TransfersService {
 
       // Entrada de volta no almoxarifado principal (locationId = NULL)
       await this.db.execute(
-        `INSERT INTO StockMovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
+        `INSERT INTO stockmovement (productId, type, quantity, referenceType, referenceId, occurredAt, note)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           item.productId,
@@ -625,7 +625,7 @@ export class TransfersService {
       // Se o item tem productInstanceId, reverter o status da instância
       if (item.productInstanceId) {
         await this.db.execute(
-          'UPDATE ProductInstance SET status = ? WHERE id = ?',
+          'UPDATE productinstance SET status = ? WHERE id = ?',
           ['AVAILABLE', item.productInstanceId]
         )
       }
@@ -633,13 +633,13 @@ export class TransfersService {
 
     // Atualizar status da transferência para PENDING
     await this.db.execute(
-      'UPDATE Transfer SET status = ?, transferredAt = NULL WHERE id = ?',
+      'UPDATE transfer SET status = ?, transferredAt = NULL WHERE id = ?',
       ['PENDING', id]
     )
 
     // Atualizar status dos itens para PENDING e limpar dados de uso
     await this.db.execute(
-      'UPDATE TransferItem SET status = ?, usedAt = NULL, returnedAt = NULL, ixcClientCode = NULL, usageNote = NULL WHERE transferId = ?',
+      'UPDATE transferitem SET status = ?, usedAt = NULL, returnedAt = NULL, ixcClientCode = NULL, usageNote = NULL WHERE transferId = ?',
       ['PENDING', id]
     )
 
@@ -653,8 +653,8 @@ export class TransfersService {
     // Buscar item com dados da transferência para identificar técnico
     const item = await this.db.queryOne<any>(
       `SELECT ti.*, tr.technicianId, tr.number as transfer_number
-       FROM TransferItem ti
-       INNER JOIN Transfer tr ON tr.id = ti.transferId
+       FROM transferitem ti
+       INNER JOIN transfer tr ON tr.id = ti.transferId
        WHERE ti.id = ?`,
       [itemId]
     )
@@ -668,7 +668,7 @@ export class TransfersService {
 
     // Registrar uso (ProductUsage)
     const usageResult = await this.db.execute(
-      `INSERT INTO ProductUsage (technicianId, productId, quantity, note, serviceOrder, clientName, usedAt)
+      `INSERT INTO productusage (technicianId, productId, quantity, note, serviceOrder, clientName, usedAt)
        VALUES (?, ?, ?, ?, ?, ?, NOW())`,
       [
         item.technicianId,
@@ -684,7 +684,7 @@ export class TransfersService {
 
     // Registrar saída do estoque do técnico
     await this.db.execute(
-      `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+      `INSERT INTO stockmovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
        VALUES (?, 'OUT', ?, ?, 'USAGE', ?, NOW(), ?)`,
       [
         item.productId,
@@ -697,24 +697,24 @@ export class TransfersService {
 
     // Atualizar item como usado
     await this.db.execute(
-      'UPDATE TransferItem SET status = ?, usedAt = ?, ixcClientCode = ?, usageNote = ? WHERE id = ?',
+      'UPDATE transferitem SET status = ?, usedAt = ?, ixcClientCode = ?, usageNote = ? WHERE id = ?',
       ['USED', new Date(), serviceOrder, usageNote, itemId]
     )
 
     // Atualizar status da transferência
     await this.updateTransferStatus(item.transferId)
 
-    return this.db.queryOne<any>('SELECT * FROM TransferItem WHERE id = ?', [itemId])
+    return this.db.queryOne<any>('SELECT * FROM transferitem WHERE id = ?', [itemId])
   }
 
   async markItemAsReturned(itemId: number) {
     await this.db.execute(
-      'UPDATE TransferItem SET status = ?, returnedAt = ? WHERE id = ?',
+      'UPDATE transferitem SET status = ?, returnedAt = ? WHERE id = ?',
       ['RETURNED', new Date(), itemId]
     )
 
     const item = await this.db.queryOne<any>(
-      'SELECT * FROM TransferItem WHERE id = ?',
+      'SELECT * FROM transferitem WHERE id = ?',
       [itemId]
     )
 
@@ -726,7 +726,7 @@ export class TransfersService {
 
   private async updateTransferStatus(transferId: number) {
     const items = await this.db.query<any>(
-      'SELECT * FROM TransferItem WHERE transferId = ?',
+      'SELECT * FROM transferitem WHERE transferId = ?',
       [transferId]
     )
 
@@ -738,7 +738,7 @@ export class TransfersService {
     const someReturned = items.some((item: any) => item.status === 'RETURNED')
 
     const transfer = await this.db.queryOne<any>(
-      'SELECT status FROM Transfer WHERE id = ?',
+      'SELECT status FROM transfer WHERE id = ?',
       [transferId]
     )
 
@@ -758,7 +758,7 @@ export class TransfersService {
 
     if (newStatus !== transfer.status) {
       await this.db.execute(
-        'UPDATE Transfer SET status = ? WHERE id = ?',
+        'UPDATE transfer SET status = ? WHERE id = ?',
         [newStatus, transferId]
       )
     }
@@ -770,7 +770,7 @@ export class TransfersService {
     file?: Express.Multer.File,
   ) {
     await this.db.execute(
-      'UPDATE Transfer SET signatureType = ?, signatureFile = ? WHERE id = ?',
+      'UPDATE transfer SET signatureType = ?, signatureFile = ? WHERE id = ?',
       [type, file ? `signatures/${file.filename}` : null, id]
     )
 
@@ -790,7 +790,7 @@ export class TransfersService {
   async delete(id: number) {
     // Verificar se a transferência existe e está cancelada
     const transfer = await this.db.queryOne<any>(
-      'SELECT * FROM Transfer WHERE id = ?',
+      'SELECT * FROM transfer WHERE id = ?',
       [id]
     )
 
@@ -804,13 +804,13 @@ export class TransfersService {
 
     // Deletar movimentos de estoque relacionados à transferência
     await this.db.execute(
-      'DELETE FROM StockMovement WHERE referenceType = ? AND referenceId = ?',
+      'DELETE FROM stockmovement WHERE referenceType = ? AND referenceId = ?',
       ['TRANSFER', id]
     )
 
     // Deletar transferência (os itens serão deletados em cascata)
     await this.db.execute(
-      'DELETE FROM Transfer WHERE id = ?',
+      'DELETE FROM transfer WHERE id = ?',
       [id]
     )
 

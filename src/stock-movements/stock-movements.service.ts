@@ -23,7 +23,7 @@ export class StockMovementsService {
     try {
       // Criar movimento de estoque
       const result = await this.db.execute(
-        `INSERT INTO StockMovement (
+        `INSERT INTO stockmovement (
           productId, type, quantity, locationId, technicianId, referenceType, referenceId,
           invoiceNumber, invoiceDate, invoiceFile, receivedAt, supplier, note, occurredAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -53,7 +53,7 @@ export class StockMovementsService {
       if (dto.type === 'IN' && dto.invoiceNumber && dto.invoiceDate) {
         // Buscar instâncias sem NF do produto (mais recentes primeiro)
         const instancesToUpdate = await this.db.query<any>(
-          `SELECT * FROM ProductInstance
+          `SELECT * FROM productinstance
            WHERE productId = ? AND invoiceNumber IS NULL
            ORDER BY createdAt DESC
            LIMIT ?`,
@@ -64,14 +64,14 @@ export class StockMovementsService {
 
         // Buscar o movimento criado para pegar occurredAt
         const movement = await this.db.queryOne<any>(
-          'SELECT * FROM StockMovement WHERE id = ?',
+          'SELECT * FROM stockmovement WHERE id = ?',
           [movementId]
         )
 
         // Atualizar cada instância com a NF e todos os dados da entrada
         for (const instance of instancesToUpdate) {
           await this.db.execute(
-            `UPDATE ProductInstance SET
+            `UPDATE productinstance SET
               invoiceNumber = ?,
               invoiceDate = ?,
               invoiceFile = ?,
@@ -95,7 +95,7 @@ export class StockMovementsService {
       }
 
       // Retornar o movimento criado
-      return this.db.queryOne('SELECT * FROM StockMovement WHERE id = ?', [movementId])
+      return this.db.queryOne('SELECT * FROM stockmovement WHERE id = ?', [movementId])
     } catch (error) {
       console.error('Erro ao criar movimento de estoque:', error)
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'

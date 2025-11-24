@@ -15,7 +15,7 @@ export class ProductUsageService {
   }) {
     // Criar usage
     const result = await this.db.execute(
-      `INSERT INTO ProductUsage (technicianId, productId, quantity, note, serviceOrder, clientName)
+      `INSERT INTO productusage (technicianId, productId, quantity, note, serviceOrder, clientName)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         data.technicianId,
@@ -31,7 +31,7 @@ export class ProductUsageService {
 
     // Criar movimento de estoque (saída do almoxarifado do técnico)
     await this.db.execute(
-      `INSERT INTO StockMovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
+      `INSERT INTO stockmovement (productId, type, quantity, technicianId, referenceType, referenceId, occurredAt, note)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.productId,
@@ -56,9 +56,9 @@ export class ProductUsageService {
         t.id as technician_id,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.id = ?
     `, [usageId])
 
@@ -96,9 +96,9 @@ export class ProductUsageService {
         t.id as technician_id,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       ORDER BY pu.usedAt DESC
     `)
 
@@ -133,8 +133,8 @@ export class ProductUsageService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
       WHERE pu.technicianId = ?
       ORDER BY pu.usedAt DESC
     `, [technicianId])
@@ -164,8 +164,8 @@ export class ProductUsageService {
         t.id as technician_id,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.productId = ?
       ORDER BY pu.usedAt DESC
     `, [productId])
@@ -198,9 +198,9 @@ export class ProductUsageService {
         t.id as technician_id,
         t.name as technician_name,
         t.category as technician_category
-      FROM ProductUsage pu
-      INNER JOIN Product p ON p.id = pu.productId
-      INNER JOIN Technician t ON t.id = pu.technicianId
+      FROM productusage pu
+      INNER JOIN product p ON p.id = pu.productId
+      INNER JOIN technician t ON t.id = pu.technicianId
       WHERE pu.usedAt >= ? AND pu.usedAt <= ?
       ORDER BY pu.usedAt DESC
     `, [startDate, endDate])

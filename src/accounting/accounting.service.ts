@@ -38,10 +38,10 @@ export class AccountingService {
         ti.usedAt,
         tr.number as transfer_number,
         tr.id as transfer_id
-      FROM TransferItem ti
-      INNER JOIN Transfer tr ON tr.id = ti.transferId
-      INNER JOIN Technician tech ON tech.id = tr.technicianId
-      INNER JOIN Product p ON p.id = ti.productId
+      FROM transferitem ti
+      INNER JOIN transfer tr ON tr.id = ti.transferId
+      INNER JOIN technician tech ON tech.id = tr.technicianId
+      INNER JOIN product p ON p.id = ti.productId
       WHERE ${whereConditions.join(' AND ')}
       ORDER BY tech.name ASC, ti.usedAt DESC
     `, params)
@@ -113,8 +113,8 @@ export class AccountingService {
         p.unit as product_unit,
         COUNT(ti.id) as total_used,
         SUM(ti.quantity) as total_quantity
-      FROM TransferItem ti
-      INNER JOIN Product p ON p.id = ti.productId
+      FROM transferitem ti
+      INNER JOIN product p ON p.id = ti.productId
       WHERE ${whereConditions.join(' AND ')}
       GROUP BY p.id, p.sku, p.name, p.unit
       ORDER BY total_used DESC
@@ -125,8 +125,8 @@ export class AccountingService {
       SELECT
         COUNT(ti.id) as total_items,
         COUNT(DISTINCT tr.technicianId) as total_technicians
-      FROM TransferItem ti
-      INNER JOIN Transfer tr ON tr.id = ti.transferId
+      FROM transferitem ti
+      INNER JOIN transfer tr ON tr.id = ti.transferId
       WHERE ${whereConditions.join(' AND ')}
     `, params)
 

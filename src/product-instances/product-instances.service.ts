@@ -12,7 +12,7 @@ export class ProductInstancesService {
     // Buscar a StockMovement mais recente do produto com NF
     const latestMovement = await this.db.queryOne<any>(`
       SELECT *
-      FROM StockMovement
+      FROM stockmovement
       WHERE productId = ?
         AND type = 'IN'
         AND invoiceNumber IS NOT NULL
@@ -23,7 +23,7 @@ export class ProductInstancesService {
     // Criar instâncias com dados da NF (se houver)
     for (const inst of instances) {
       await this.db.execute(
-        `INSERT INTO ProductInstance (
+        `INSERT INTO productinstance (
           productId, serialNumber, macAddress, invoiceNumber, invoiceDate,
           invoiceFile, receivedAt, supplier, entryDate, note
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -52,8 +52,8 @@ export class ProductInstancesService {
         p.id as product_id,
         p.sku as product_sku,
         p.name as product_name
-      FROM ProductInstance pi
-      INNER JOIN Product p ON p.id = pi.productId
+      FROM productinstance pi
+      INNER JOIN product p ON p.id = pi.productId
       WHERE pi.productId = ?
       ORDER BY pi.createdAt DESC
     `, [productId]);
@@ -92,8 +92,8 @@ export class ProductInstancesService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM ProductInstance pi
-      INNER JOIN Product p ON p.id = pi.productId
+      FROM productinstance pi
+      INNER JOIN product p ON p.id = pi.productId
       WHERE pi.id = ?
     `, [id]);
 
@@ -135,8 +135,8 @@ export class ProductInstancesService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM ProductInstance pi
-      INNER JOIN Product p ON p.id = pi.productId
+      FROM productinstance pi
+      INNER JOIN product p ON p.id = pi.productId
       WHERE pi.serialNumber = ?
     `, [serialNumber]);
 
@@ -178,8 +178,8 @@ export class ProductInstancesService {
         p.sku as product_sku,
         p.name as product_name,
         p.unit as product_unit
-      FROM ProductInstance pi
-      INNER JOIN Product p ON p.id = pi.productId
+      FROM productinstance pi
+      INNER JOIN product p ON p.id = pi.productId
       WHERE pi.macAddress = ?
     `, [macAddress]);
 
@@ -268,26 +268,26 @@ export class ProductInstancesService {
     }
 
     if (updates.length === 0) {
-      return this.db.queryOne('SELECT * FROM ProductInstance WHERE id = ?', [id])
+      return this.db.queryOne('SELECT * FROM productinstance WHERE id = ?', [id])
     }
 
     values.push(id)
 
     await this.db.execute(
-      `UPDATE ProductInstance SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE productinstance SET ${updates.join(', ')} WHERE id = ?`,
       values
     )
 
-    return this.db.queryOne('SELECT * FROM ProductInstance WHERE id = ?', [id])
+    return this.db.queryOne('SELECT * FROM productinstance WHERE id = ?', [id])
   }
 
   async delete(id: number) {
-    return this.db.execute('DELETE FROM ProductInstance WHERE id = ?', [id]);
+    return this.db.execute('DELETE FROM productinstance WHERE id = ?', [id]);
   }
 
   async getAvailableCount(productId: number) {
     const result = await this.db.queryOne<any>(
-      `SELECT COUNT(*) as count FROM ProductInstance WHERE productId = ? AND status = 'AVAILABLE'`,
+      `SELECT COUNT(*) as count FROM productinstance WHERE productId = ? AND status = 'AVAILABLE'`,
       [productId]
     );
     return result?.count || 0;

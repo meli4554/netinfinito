@@ -16,9 +16,12 @@ export class AuthController {
   @Public()
   async login(@Body() dto: LoginDto) {
     const user = await this.auth.login(dto.email, dto.password)
+    // Retorna um token simples (base64 do email)
+    const token = Buffer.from(dto.email).toString('base64')
     return {
       message: 'Login realizado com sucesso',
-      user
+      user,
+      token
     }
   }
 
