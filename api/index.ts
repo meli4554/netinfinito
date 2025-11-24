@@ -1,18 +1,73 @@
-import express from 'express';
-import serverless from 'serverless-http';
+import 'dotenv/config'
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from '../src/app.module'
+import { NestExpressApplication } from '@nestjs/platform-express'
+import { join } from 'path'
+import serverless from 'serverless-http'
+import { AllExceptionsFilter } from '../src/filters/http-exception.filter'
 
-// Cria uma aplicação Express
-const app = express();
+let cachedServer: any = null
 
-// Define uma rota que responde a tudo com uma mensagem de sucesso
-app.use((req, res, next) => {
-  // Adiciona um log para sabermos que a função foi invocada
-  console.log(`[DEBUG] Rota de teste acessada: ${req.url}`);
-  
-  // Retorna uma resposta JSON simples
-  res.status(200).json({ message: "Servidor de teste está no ar. O problema está na inicialização do NestJS." });
-});
+async function bootstrap() {
+  if (cachedServer) {
+    return cachedServer
+  }
 
-// Exporta o handler para a Vercel
-export default serverless(app);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug'],
+    bodyParser: true
+  })
 
+  // Configurar arquivos estáticos
+  app.useStaticAssets(join(__dirname, '..', 'public'))
+
+  // Configuração do CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || true,
+    credentials: true
+  })
+
+  // Filtro global de exceções
+  app.useGlobalFilters(new AllExceptionsFilter())
+
+  await app.init()
+
+  const expressApp = app.getHttpAdapter().getInstance()
+  const handler = serverless(expressApp)
+
+  cachedServer = handler
+  return handler
+}
+
+// Para desenvolvimento local
+async function startLocalServer() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug'],
+    bodyParser: true
+  })
+
+  app.useStaticAssets(join(__dirname, '..', 'public'))
+
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || true,
+    credentials: true
+  })
+
+  app.useGlobalFilters(new AllExceptionsFilter())
+
+  const port = process.env.PORT || 3000
+  await app.listen(port)
+  console.log(`Servidor rodando em http://localhost:${port}`)
+}
+
+// Se não estiver rodando como serverless, inicia servidor local
+if (require.main === module) {
+  startLocalServer()
+}
+
+module.exports = async (req: any, res: any) => {
+  const handler = await bootstrap()
+  return handler(req, res)
+}
+
+export default module.exports
