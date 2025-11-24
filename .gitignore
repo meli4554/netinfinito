@@ -41,7 +41,7 @@ import-sql-to-aiven.js
 
 # Database files
 *.sql
-ca.pem
+# ca.pem
 
 # Uploads
 uploads/*

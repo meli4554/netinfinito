@@ -4,9 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only api/index.ts",
-    "build": "tsc",
-    "start": "node dist/api/index.js",
-    "vercel-build": "echo 'Build completed. Vercel will handle TypeScript compilation.'"
+    "build": "tsc && cp ca.pem dist/",
+    "start": "node dist/api/index.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

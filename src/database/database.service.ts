@@ -12,7 +12,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const sslConfig =
       process.env.DB_SSL === 'true'
         ? {
-            ca: fs.readFileSync(path.join(process.cwd(), 'ca.pem')),
+            ca: fs.readFileSync(path.join(__dirname, '..', '..', 'ca.pem')),
             rejectUnauthorized: true,
           }
         : undefined;
