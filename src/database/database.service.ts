@@ -34,6 +34,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pool: mysql.Pool;
 
   async onModuleInit() {
+    console.log('🔧 Iniciando configuração do banco de dados...');
+    console.log('📊 Variáveis de ambiente:');
+    console.log('  - DB_HOST:', process.env.DB_HOST);
+    console.log('  - DB_PORT:', process.env.DB_PORT);
+    console.log('  - DB_USER:', process.env.DB_USER);
+    console.log('  - DB_NAME:', process.env.DB_NAME);
+    console.log('  - DB_SSL:', process.env.DB_SSL);
+
     // Configuração SSL para Aiven e outros serviços cloud
     const sslConfig =
       process.env.DB_SSL === 'true'
@@ -42,6 +50,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             rejectUnauthorized: true,
           }
         : undefined;
+
+    console.log('🔐 SSL Config:', sslConfig ? 'Habilitado' : 'Desabilitado');
 
     // Criar pool de conexões
     this.pool = mysql.createPool({
@@ -56,9 +66,22 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
+      connectTimeout: 10000, // 10 segundos
     });
 
-    console.log('✓ Pool de conexões para o MySQL criado. Host:', process.env.DB_HOST);
+    console.log('✓ Pool de conexões criado');
+
+    // Testar conexão
+    try {
+      console.log('🔌 Testando conexão com o banco de dados...');
+      const connection = await this.pool.getConnection();
+      console.log('✅ Conexão estabelecida com sucesso!');
+      connection.release();
+    } catch (error) {
+      console.error('❌ Erro ao conectar no banco de dados:', error);
+      console.error('Stack:', error.stack);
+      throw error;
+    }
   }
 
   async onModuleDestroy() {
