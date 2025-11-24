@@ -53,7 +53,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     console.log('🔐 SSL Config:', sslConfig ? 'Habilitado' : 'Desabilitado');
 
-    // Criar pool de conexões
+    // Criar pool de conexões com configurações otimizadas para Vercel
     this.pool = mysql.createPool({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '3306'),
@@ -62,26 +62,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       database: process.env.DB_NAME || 'defaultdb',
       ssl: sslConfig,
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: 5, // Reduzido para serverless
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
-      connectTimeout: 10000, // 10 segundos
+      connectTimeout: 5000, // 5 segundos (Vercel tem limite de 10s)
+      acquireTimeout: 5000, // Timeout para obter conexão do pool
     });
 
-    console.log('✓ Pool de conexões criado');
-
-    // Testar conexão
-    try {
-      console.log('🔌 Testando conexão com o banco de dados...');
-      const connection = await this.pool.getConnection();
-      console.log('✅ Conexão estabelecida com sucesso!');
-      connection.release();
-    } catch (error) {
-      console.error('❌ Erro ao conectar no banco de dados:', error);
-      console.error('Stack:', error.stack);
-      throw error;
-    }
+    console.log('✓ Pool de conexões criado (lazy connection - sem teste inicial)');
   }
 
   async onModuleDestroy() {
