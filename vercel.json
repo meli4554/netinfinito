@@ -1,8 +1,16 @@
 {
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api"
-    }
+    { "source": "/auth/:path*", "destination": "/api" },
+    { "source": "/users/:path*", "destination": "/api" },
+    { "source": "/products/:path*", "destination": "/api" },
+    { "source": "/product-instances/:path*", "destination": "/api" },
+    { "source": "/inventory/:path*", "destination": "/api" },
+    { "source": "/technicians/:path*", "destination": "/api" },
+    { "source": "/warehouses/:path*", "destination": "/api" },
+    { "source": "/transfers/:path*", "destination": "/api" },
+    { "source": "/product-usage/:path*", "destination": "/api" },
+    { "source": "/reports/:path*", "destination": "/api" },
+    { "source": "/stock-movements/:path*", "destination": "/api" },
+    { "source": "/accounting/:path*", "destination": "/api" }
   ]
 }
