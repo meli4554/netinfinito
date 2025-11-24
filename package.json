@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only api/index.ts",
-    "build": "tsc && cp ca.pem dist/",
+    "build": "tsc",
     "start": "node dist/api/index.js"
   },
   "dependencies": {
