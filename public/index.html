@@ -60,8 +60,32 @@
 
   <script src="/js/auth.js"></script>
   <script>
-    // TEMPORÁRIO: Redireciona automaticamente para o dashboard sem login
-    window.location.href = '/pages/dashboard.html';
+    // Verificar se já está logado
+    const user = localStorage.getItem('user');
+    if (user) {
+      window.location.href = '/pages/dashboard.html';
+    }
+
+    // Form submission
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      try {
+        showLoading(submitBtn);
+
+        await AuthService.login(email, password);
+
+        // Redirecionar para dashboard
+        window.location.href = '/pages/dashboard.html';
+      } catch (error) {
+        hideLoading(submitBtn, 'Entrar no Sistema');
+        showAlert(error.message || 'Erro ao fazer login', 'error');
+      }
+    });
   </script>
 </body>
 </html>
