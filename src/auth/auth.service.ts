@@ -1,40 +1,33 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { DatabaseService } from '../database/database.service'
-import * as argon2 from 'argon2'
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AuthService {
   constructor(private readonly db: DatabaseService) {}
 
-  async login(email: string, password: string) {
+  async login(username: string, password: string) {
+    // Adaptado para banco forumAletheia: tabela users, campo username e password_hash
     const user = await this.db.queryOne<{
-      id: string
-      email: string
-      passwordHash: string
+      id: number
+      username: string
+      password_hash: string
       name: string | null
-      roleId: number
-      isActive: boolean
-    }>('SELECT * FROM user WHERE email = ?', [email])
+    }>('SELECT * FROM users WHERE username = ?', [username])
 
     if (!user) throw new UnauthorizedException('Credenciais inválidas')
-    if (!user.isActive) throw new UnauthorizedException('Usuário inativo')
 
-    const ok = await argon2.verify(user.passwordHash, password)
+    // Verifica senha com bcrypt (forumAletheia usa bcrypt)
+    const ok = await bcrypt.compare(password, user.password_hash)
     if (!ok) throw new UnauthorizedException('Credenciais inválidas')
-
-    // Buscar informações da role
-    const role = await this.db.queryOne<{ name: string }>(
-      'SELECT name FROM role WHERE id = ?',
-      [user.roleId]
-    )
 
     // Retorna os dados do usuário para armazenar na sessão
     return {
       id: user.id,
-      email: user.email,
+      email: user.username, // mantém campo email para compatibilidade com frontend
       name: user.name,
-      roleId: user.roleId,
-      roleName: role?.name || 'unknown'
+      roleId: 1, // valor fixo para manter compatibilidade
+      roleName: 'admin' // valor fixo para manter compatibilidade
     }
   }
 }
