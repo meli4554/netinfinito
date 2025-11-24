@@ -39,6 +39,10 @@ temp/
 # Test files
 test-*.js
 import-sql-to-aiven.js
+verify-aiven.js
+check-*.js
+create-*.js
+fix-*.js
 
 # Database files
 *.sql
