@@ -61,61 +61,62 @@ export class TransfersService {
   }
 
   async list() {
-    const transfers = await this.db.query<any>(`
-      SELECT
-        t.*,
-        fw.id as fromWarehouse_id,
-        fw.name as fromWarehouse_name,
-        fw.code as fromWarehouse_code,
-        fw.type as fromWarehouse_type,
-        tw.id as toWarehouse_id,
-        tw.name as toWarehouse_name,
-        tw.code as toWarehouse_code,
-        tw.type as toWarehouse_type,
-        tech.id as technician_id,
-        tech.name as technician_name,
-        tech.category as technician_category,
-        tech.phone as technician_phone,
-        tech.email as technician_email
-      FROM transfer t
-      LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
-      LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
-      LEFT JOIN technician tech ON tech.id = t.technicianId
-      ORDER BY t.createdAt DESC
-    `);
+    try {
+      const transfers = await this.db.query<any>(`
+        SELECT
+          t.*,
+          fw.id as fromWarehouse_id,
+          fw.name as fromWarehouse_name,
+          fw.code as fromWarehouse_code,
+          fw.type as fromWarehouse_type,
+          tw.id as toWarehouse_id,
+          tw.name as toWarehouse_name,
+          tw.code as toWarehouse_code,
+          tw.type as toWarehouse_type,
+          tech.id as technician_id,
+          tech.name as technician_name,
+          tech.category as technician_category,
+          tech.phone as technician_phone,
+          tech.email as technician_email
+        FROM transfer t
+        LEFT JOIN warehouse fw ON fw.id = t.fromWarehouseId
+        LEFT JOIN warehouse tw ON tw.id = t.toWarehouseId
+        LEFT JOIN technician tech ON tech.id = t.technicianId
+        ORDER BY t.createdAt DESC
+      `);
 
-    if (transfers.length === 0) {
-      return [];
-    }
-
-    const transferIds = transfers.map(t => t.id);
-
-    // Busca todos os itens de uma vez
-    const allItems = await this.db.query<any>(`
-      SELECT
-        ti.*,
-        p.id as product_id,
-        p.sku as product_sku,
-        p.name as product_name,
-        p.unit as product_unit
-      FROM transferitem ti
-      INNER JOIN product p ON p.id = ti.productId
-      WHERE ti.transferId IN (?)
-    `, [transferIds]);
-
-    // Agrupa os itens por transferId para fácil acesso
-    const itemsByTransferId = new Map<number, any[]>();
-    for (const item of allItems) {
-      if (!itemsByTransferId.has(item.transferId)) {
-        itemsByTransferId.set(item.transferId, []);
+      if (transfers.length === 0) {
+        return [];
       }
-      itemsByTransferId.get(item.transferId).push(item);
-    }
 
-    // Monta a resposta final
-    const transfersWithItems = transfers.map(transfer => {
-      const items = itemsByTransferId.get(transfer.id) || [];
-      return {
+      const transferIds = transfers.map(t => t.id);
+
+      // Busca todos os itens de uma vez
+      const allItems = await this.db.query<any>(`
+        SELECT
+          ti.*,
+          p.id as product_id,
+          p.sku as product_sku,
+          p.name as product_name,
+          p.unit as product_unit
+        FROM transferitem ti
+        INNER JOIN product p ON p.id = ti.productId
+        WHERE ti.transferId IN (?)
+      `, [transferIds]);
+
+      // Agrupa os itens por transferId para fácil acesso
+      const itemsByTransferId = new Map<number, any[]>();
+      for (const item of allItems) {
+        if (!itemsByTransferId.has(item.transferId)) {
+          itemsByTransferId.set(item.transferId, []);
+        }
+        itemsByTransferId.get(item.transferId)!.push(item);
+      }
+
+      // Monta a resposta final
+      const transfersWithItems = transfers.map(transfer => {
+        const items = itemsByTransferId.get(transfer.id) || [];
+        return {
         id: transfer.id,
         number: transfer.number,
         status: transfer.status,
@@ -171,10 +172,14 @@ export class TransfersService {
             unit: item.product_unit
           }
         }))
-      };
-    });
+        };
+      });
 
-    return transfersWithItems;
+      return transfersWithItems;
+    } catch (error) {
+      console.error('Error listing transfers:', error);
+      return [];
+    }
   }
 
   async findOne(id: number) {
